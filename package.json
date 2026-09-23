@@ -1,0 +1,14 @@
+{
+  "name": "tablero-finora",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tablero Kanban del equipo de Finora (proyecto final, Universidad ORT Uruguay)",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "claude": "sh armar.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

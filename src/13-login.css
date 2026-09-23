@@ -1,0 +1,28 @@
+/* ===== Versión web: acceso, cuenta e invitaciones ===== */
+.acceso {
+  min-height: 100%; display: grid; place-items: center; padding: 40px var(--gutter);
+  background:
+    radial-gradient(1200px 520px at 50% -10%, color-mix(in srgb, var(--card) 70%, transparent), transparent 70%),
+    var(--bg);
+}
+.acceso-caja { width: 100%; max-width: 400px; display: grid; gap: 22px; }
+.acceso-marca { display: grid; gap: 12px; justify-items: start; }
+.acceso-marca h1 { font-size: 30px; font-weight: 700; letter-spacing: -.04em; line-height: 1.1; }
+.acceso-marca p { color: var(--text-2); max-width: 36ch; }
+.acceso-tarjeta {
+  display: grid; gap: 16px; padding: 22px; border-radius: 14px;
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+}
+.acceso-tarjeta form { display: grid; gap: 14px; }
+.acceso-tarjeta .btn-primario { height: 40px; }
+.acceso-pie { font-size: 12.5px; color: var(--text-2); }
+.acceso-pie strong { color: var(--text); font-weight: 600; }
+.mensaje { padding: 10px 12px; border-radius: 8px; font-size: 13.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.mensaje.error { background: var(--red-tint); color: var(--text); }
+.mensaje.ok { background: var(--green-tint); color: var(--text); }
+.mensaje.info { background: var(--blue-tint); color: var(--text); }
+.menu-cuenta { display: grid; gap: 2px; padding: 8px 10px 6px; margin-top: 4px; border-top: 1px solid var(--line); font-size: 12px; }
+.menu-email { font-size: 13px; color: var(--text); overflow-wrap: anywhere; }
+.invitaciones { max-width: 640px; }
+.invitaciones .link-sitio { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); }
+.invitaciones .link-sitio code { font: 500 12.5px/1.4 var(--f-mono); color: var(--text); overflow-wrap: anywhere; }
