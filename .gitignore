@@ -5,3 +5,4 @@ node_modules/
 .env.*
 finora-tablero.html
 .claude/settings.local.json
+docs/guia/demo-*.html

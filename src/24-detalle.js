@@ -62,7 +62,7 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
             ${ctx.columnas.map(c => html`<option value=${c.id}>${c.nombre}</option>`)}
           </select>
           ${hecha && t.terminadaEn && html`<span class="nota">Terminada el ${fechaLarga(isoDe(new Date(t.terminadaEn)))}</span>`}
-          ${!hecha && t.entroEnColumna && html`<span class="nota">En ${col ? col.nombre.toLowerCase() : 'esta columna'} desde ${momento(t.entroEnColumna)}</span>`}
+          ${!hecha && t.entroEnColumna && html`<span class="nota">${col ? `En «${col.nombre}»` : 'En esta columna'} desde ${momento(t.entroEnColumna)}</span>`}
         </div>
 
         <label class="prop-etq" for="det-prioridad">Prioridad</label>

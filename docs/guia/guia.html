@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía del Tablero Finora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@1,6..72,400&family=Sora:wght@600;700&display=swap">
+<style>
+  :root {
+    --noche: #07132F; --marino: #0C2150; --claro: #F5F7FB; --linea: #D8DFEB; --pizarra: #5A6685;
+    --ambar: #C0843A; --ambar-hondo: #8A5A1E; --ambar-tinte: #F6ECDD; --azul: #2B5FC7; --verde: #1B7A55; --rojo: #C2413E;
+    --f-titulo: 'Sora', 'Figtree', sans-serif; --f-texto: 'Figtree', system-ui, sans-serif;
+    --f-mono: 'IBM Plex Mono', Consolas, monospace; --f-acento: 'Newsreader', Georgia, serif;
+  }
+  @page { size: A4; margin: 15mm 16mm 16mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html { background: #fff; }
+  body { margin: 0; color: var(--noche); font: 400 10.5pt/1.55 var(--f-texto); }
+  h1, h2, h3 { font-family: var(--f-titulo); margin: 0; text-wrap: balance; }
+  h2 { font-size: 19pt; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; }
+  h3 { font-size: 11.5pt; font-weight: 600; letter-spacing: -.01em; }
+  p { margin: 0; }
+  .etq { font: 500 7.5pt/1.4 var(--f-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--pizarra); }
+  .mono { font-family: var(--f-mono); }
+  .tenue { color: var(--pizarra); }
+  .pagina { break-before: page; display: grid; gap: 7mm; align-content: start; }
+  .pagina:first-child { break-before: auto; }
+  .bloque { display: grid; gap: 3.5mm; break-inside: avoid; }
+  .cab-seccion { display: grid; gap: 1.5mm; }
+  .cab-seccion p { color: var(--pizarra); max-width: 150mm; }
+
+  /* Portada */
+  .portada { display: grid; gap: 5mm; padding-bottom: 6mm; border-bottom: 1px solid var(--linea); }
+  .portada h1 { font-size: 30pt; font-weight: 700; letter-spacing: -.045em; line-height: 1.05; }
+  .portada .bajada { font-family: var(--f-titulo); font-weight: 600; font-size: 13pt; letter-spacing: -.02em; max-width: 150mm; }
+  .portada .bajada em { font-family: var(--f-acento); font-weight: 400; font-style: italic; font-size: 14.5pt; letter-spacing: 0; }
+  .enlace { display: grid; grid-template-columns: auto 1fr; gap: 1mm 5mm; align-items: center; padding: 4.5mm 5mm; border-radius: 3mm;
+    background: var(--noche); color: #EEF2F9; }
+  .enlace .etq { color: #93A1C2; grid-column: 2; }
+  .enlace .url { grid-column: 2; font: 500 14pt/1.2 var(--f-mono); color: #fff; }
+  .enlace .nota { grid-column: 2; font-size: 9pt; color: #93A1C2; }
+  .enlace svg { grid-row: 1 / span 3; }
+
+  /* Pasos */
+  .con-captura { display: grid; grid-template-columns: 1fr 62mm; gap: 7mm; align-items: start; }
+  .pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 4mm; counter-reset: paso; }
+  .pasos li { display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; break-inside: avoid; }
+  .pasos li::before { counter-increment: paso; content: counter(paso); display: grid; place-items: center; width: 7mm; height: 7mm; border-radius: 50%;
+    background: var(--noche); color: #fff; font: 600 9.5pt/1 var(--f-titulo); }
+  .pasos h3 { margin-bottom: .8mm; }
+  .pasos p { color: #2A3553; }
+
+  figure { margin: 0; display: grid; gap: 2mm; break-inside: avoid; }
+  figure img { width: 100%; display: block; border: 1px solid var(--linea); border-radius: 2.5mm; }
+  figcaption { font-size: 8.5pt; color: var(--pizarra); }
+
+  .aviso { padding: 3.5mm 4.5mm; border-radius: 2.5mm; background: var(--ambar-tinte); color: var(--noche); font-size: 9.5pt; break-inside: avoid; }
+  .aviso strong { color: var(--ambar-hondo); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; break-inside: avoid; }
+  th { text-align: left; font: 500 7.5pt/1.3 var(--f-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--pizarra);
+    padding: 0 3mm 2mm 0; border-bottom: 1px solid var(--noche); }
+  td { padding: 2.4mm 3mm 2.4mm 0; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  table.atajos td:first-child { width: 36mm; }
+
+  .grilla-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm 7mm; }
+  .ficha { display: grid; gap: 1.2mm; break-inside: avoid; }
+  .ficha h3 { font-size: 10.5pt; }
+  .ficha p { font-size: 9.5pt; color: #2A3553; }
+
+  .chip { display: inline-block; font: 500 7.5pt/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; padding: 1.1mm 1.6mm; border-radius: 1mm; vertical-align: 1px; }
+  .chip.alta { background: var(--ambar-tinte); color: var(--ambar-hondo); }
+  .chip.urgente { background: #FBE5E4; color: var(--rojo); }
+  .chip.codigo { background: var(--claro); color: var(--pizarra); }
+  .ambar { color: var(--ambar-hondo); font-weight: 600; }
+  .rojo { color: var(--rojo); font-weight: 600; }
+  kbd { display: inline-block; min-width: 6mm; padding: .6mm 1.6mm; border: 1px solid var(--linea); border-bottom-width: 2px; border-radius: 1.2mm;
+    font: 500 8.5pt/1.3 var(--f-mono); text-align: center; background: #fff; }
+
+  .acuerdos { list-style: none; margin: 0; padding: 0; display: grid; gap: 2.6mm; counter-reset: ac; }
+  .acuerdos li { display: grid; grid-template-columns: 7mm 1fr; gap: 2mm; font-size: 10pt; break-inside: avoid; }
+  .acuerdos li::before { counter-increment: ac; content: counter(ac, decimal-leading-zero); font: 500 8.5pt/1.7 var(--f-mono); color: var(--ambar-hondo); }
+
+  .cierre { display: flex; justify-content: space-between; gap: 6mm; align-items: center; padding-top: 5mm; border-top: 1px solid var(--linea); font-size: 9pt; color: var(--pizarra); }
+  .cierre .mono { color: var(--noche); }
+</style>
+</head>
+<body>
+
+<!-- ============ Página 1: entrar ============ -->
+<section class="pagina">
+  <header class="portada">
+    <svg width="46" height="46" viewBox="-6 -6 60 60" aria-hidden="true"><path fill="#C0843A" d="M24 2C24 15.486 32.514 24 46 24C32.514 24 24 32.514 24 46C24 32.514 15.486 24 2 24C15.486 24 24 15.486 24 2Z"/></svg>
+    <div class="etq">Finora · Proyecto final · ORT Uruguay</div>
+    <h1>Guía del tablero del equipo</h1>
+    <p class="bajada">Qué hay que hacer, quién lo hace y para cuándo, <em>todo en un solo lugar.</em></p>
+    <div class="enlace">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#C0843A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>
+      <span class="etq">El tablero está acá</span>
+      <span class="url">tablero-kanban-beryl.vercel.app</span>
+      <span class="nota">Guardalo en favoritos. Anda en la compu y en el celular.</span>
+    </div>
+  </header>
+
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">Paso a paso</div>
+      <h2>Entrar por primera vez</h2>
+      <p>Lo hacés una sola vez. Después entrás con tu email y tu contraseña.</p>
+    </div>
+    <div class="con-captura">
+      <ol class="pasos">
+        <li><div><h3>Pedí que te inviten</h3><p>Alguien del equipo tiene que agregar tu email en <strong>Equipo → Invitar al equipo</strong>. Sin eso podés crear la cuenta, pero no vas a ver nada.</p></div></li>
+        <li><div><h3>Creá tu cuenta</h3><p>Abrí el link y tocá <strong>Crear cuenta</strong>. Usá el <strong>mismo email</strong> que invitaron y una contraseña de al menos 8 caracteres.</p></div></li>
+        <li><div><h3>Confirmá tu email</h3><p>Te llega un correo con un link para confirmar la cuenta. Abrilo. Si no aparece en unos minutos, fijate en spam.</p></div></li>
+        <li><div><h3>Entrá y sumate</h3><p>Volvé al link y tocá <strong>Entrar</strong>. La primera vez elegís tu apodo, tu rol y tu color: así te ve el resto en las tareas.</p></div></li>
+      </ol>
+      <figure>
+        <img src="cap-login.png" alt="Pantalla de entrada del tablero con las pestañas Entrar y Crear cuenta">
+        <figcaption>La pantalla de entrada.</figcaption>
+      </figure>
+    </div>
+    <p class="aviso"><strong>¿Te olvidaste la contraseña?</strong> En la pantalla de entrada tocá “¿Te olvidaste la contraseña?”, escribí tu email y te llega un link para elegir una nueva.</p>
+  </div>
+</section>
+
+<!-- ============ Página 2: el tablero ============ -->
+<section class="pagina">
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">Cómo está armado</div>
+      <h2>El tablero</h2>
+      <p>Cada tarjeta es una tarea. Avanza de izquierda a derecha a medida que la trabajamos. Todo lo que cambia se guarda solo y el resto lo ve al instante.</p>
+    </div>
+    <figure>
+      <img src="cap-tablero.png" alt="Tablero con las columnas Ideas, Por hacer, En curso, En revisión y Hecho">
+      <figcaption>Las tareas de la imagen son de ejemplo.</figcaption>
+    </figure>
+  </div>
+
+  <div class="bloque">
+    <h3>Las columnas</h3>
+    <table>
+      <thead><tr><th>Columna</th><th>Qué va ahí</th></tr></thead>
+      <tbody>
+        <tr><td>Ideas</td><td>Lo que se nos ocurrió y todavía no decidimos hacer.</td></tr>
+        <tr><td>Por hacer</td><td>Lo que acordamos hacer y ya se puede empezar.</td></tr>
+        <tr><td>En curso</td><td>Lo que alguien está haciendo ahora. Límite: 4 tareas a la vez.</td></tr>
+        <tr><td>En revisión</td><td>Lo terminado, esperando que otra persona lo revise. Límite: 3.</td></tr>
+        <tr><td>Hecho</td><td>Lo revisado y cerrado. Cuenta para el avance en el Resumen.</td></tr>
+      </tbody>
+    </table>
+    <p class="tenue" style="font-size:9.5pt">El número al lado del nombre (por ejemplo <span class="mono">2/4</span>) muestra cuántas tareas hay y el límite. Se pone <span class="ambar">ámbar</span> cuando la columna está llena y <span class="rojo">roja</span> cuando se pasa: primero terminamos algo, después empezamos otra cosa.</p>
+  </div>
+</section>
+
+<!-- ============ Página 3: leer una tarjeta y trabajar ============ -->
+<section class="pagina">
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">Las tarjetas</div>
+      <h2>Qué dice cada tarjeta</h2>
+    </div>
+    <div class="grilla-2">
+      <div class="ficha"><h3><span class="chip codigo">FIN-12</span> El código</h3><p>Cada tarea tiene un número propio. Usalo para nombrarla en el grupo: “ya subí lo de la FIN-12”.</p></div>
+      <div class="ficha"><h3>El tipo</h3><p><strong>RF</strong> requerimiento funcional, <strong>RNF</strong> no funcional, <strong>Tarea</strong>, <strong>Bug</strong>, <strong>Invest.</strong> (investigación) y <strong>Doc</strong> (documentación).</p></div>
+      <div class="ficha"><h3><span class="chip alta">Alta</span> <span class="chip urgente">Urgente</span> La prioridad</h3><p>Solo se marcan las que piden atención. Las de prioridad media y baja no llevan cartel.</p></div>
+      <div class="ficha"><h3>El vencimiento</h3><p>La fecha se pone <span class="ambar">ámbar</span> cuando faltan 2 días o menos, y <span class="rojo">roja</span> cuando ya venció.</p></div>
+      <div class="ficha"><h3>El avance</h3><p><span class="mono">1/3</span> son los criterios y subtareas tildados; al lado van los comentarios y los puntos de estimación.</p></div>
+      <div class="ficha"><h3>Bloqueada</h3><p>Aparece en <span class="rojo">rojo</span> cuando algo la frena, o cuando depende de otra tarea que no terminó (“Espera a FIN-4”).</p></div>
+    </div>
+    <p class="tenue" style="font-size:9.5pt">Abajo a la derecha están los círculos con las iniciales de quienes la tienen asignada.</p>
+  </div>
+
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">En el día a día</div>
+      <h2>Trabajar con tareas</h2>
+    </div>
+    <div class="grilla-2">
+      <div class="ficha"><h3>Crear una tarea</h3><p>Tocá <strong>Nueva tarea</strong> (o apretá <kbd>N</kbd>). Para cargar varias rápido, usá <strong>+ Agregar tarea</strong> al pie de una columna: escribís el título, <kbd>Enter</kbd> y seguís con la próxima.</p></div>
+      <div class="ficha"><h3>Moverla</h3><p>Arrastrá la tarjeta a otra columna. En el celular, <strong>mantenela apretada un momento</strong> y después arrastrala.</p></div>
+      <div class="ficha"><h3>Abrirla</h3><p>Tocá la tarjeta para ver y editar todo el detalle. Se guarda solo mientras escribís.</p></div>
+      <div class="ficha"><h3>Terminarla</h3><p>Cuando la revisaron, pasala a <strong>Hecho</strong>. Si ya no sirve, <strong>Archivar</strong> la saca del tablero sin borrarla.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Página 4: el detalle ============ -->
+<section class="pagina">
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">Adentro de una tarea</div>
+      <h2>El detalle</h2>
+      <p>Al tocar una tarjeta se abre este panel. Cualquiera del equipo puede editarlo.</p>
+    </div>
+    <figure>
+      <img src="cap-detalle.png" alt="Panel de detalle de la tarea FIN-3 con estado, prioridad, responsables, etiquetas, vencimiento, estimación, hito y criterios de aceptación">
+      <figcaption>La tarea de la imagen es de ejemplo.</figcaption>
+    </figure>
+    <table>
+      <thead><tr><th>Campo</th><th>Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td>Responsables</td><td>Quién la hace. Puede ser más de una persona.</td></tr>
+        <tr><td>Etiquetas</td><td>El área: Producto, Datos y Odoo, IA y proyección, Diseño y marca, Investigación, Seguridad y Académico ORT.</td></tr>
+        <tr><td>Estimación</td><td>Cuánto trabajo lleva, en puntos: 1, 2, 3, 5, 8 o 13. Sirve para comparar tareas entre sí, no son horas.</td></tr>
+        <tr><td>Hito</td><td>La entrega o el sprint al que pertenece. El avance se ve en la vista Hitos.</td></tr>
+        <tr><td>Criterios de aceptación</td><td>Qué tiene que cumplir para estar lista. Sobre todo en los requerimientos (RF y RNF).</td></tr>
+        <tr><td>Depende de</td><td>Otras tareas que tienen que terminar antes. Mientras no terminen, esta aparece bloqueada.</td></tr>
+        <tr><td>Enlaces y comentarios</td><td>Archivos de Figma, Drive o GitHub, y la conversación sobre la tarea.</td></tr>
+        <tr><td>Historial</td><td>Quién la movió o cambió, y cuándo.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ Página 5: vistas, acuerdos, ayuda ============ -->
+<section class="pagina">
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">Arriba del tablero</div>
+      <h2>Las otras vistas</h2>
+    </div>
+    <table>
+      <thead><tr><th>Vista</th><th>Qué muestra</th></tr></thead>
+      <tbody>
+        <tr><td>Lista</td><td>Todas las tareas en una tabla. Tocá un encabezado para ordenar.</td></tr>
+        <tr><td>Calendario</td><td>Las tareas por fecha de vencimiento y los hitos del mes.</td></tr>
+        <tr><td>Hitos</td><td>Las entregas a ORT y los sprints, con cuánto falta y cuánto avanzamos.</td></tr>
+        <tr><td>Resumen</td><td>Tareas abiertas, vencidas y bloqueadas, la carga de cada uno y lo terminado por semana.</td></tr>
+        <tr><td>Equipo</td><td>Quiénes somos, qué tiene cada uno, y dónde se invita a alguien nuevo.</td></tr>
+        <tr><td>Actividad</td><td>Los últimos movimientos: quién creó, movió o comentó cada tarea.</td></tr>
+      </tbody>
+    </table>
+    <p class="tenue" style="font-size:9.5pt">Para encontrar algo, usá el buscador o los filtros: <strong>Mis tareas</strong>, Responsable, Etiqueta, Prioridad, Tipo, Hito, Vencidas, Bloqueadas y Archivadas.</p>
+  </div>
+
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">Propuesta para acordar</div>
+      <h2>Cómo lo usamos</h2>
+      <p>Seis reglas para que el tablero diga la verdad. Las podemos cambiar entre todos.</p>
+    </div>
+    <ol class="acuerdos">
+      <li><span>Nada entra en <strong>En curso</strong> sin un responsable.</span></li>
+      <li><span>Cada uno mueve sus propias tarjetas apenas cambia algo.</span></li>
+      <li><span>Respetamos los límites: si una columna está llena, primero terminamos algo.</span></li>
+      <li><span>Los requerimientos llevan criterios de aceptación, y están listos cuando están todos tildados.</span></li>
+      <li><span>Lo que está en <strong>En revisión</strong> lo revisa otra persona antes de pasarlo a Hecho.</span></li>
+      <li><span>Las dudas de una tarea van en sus comentarios; en el grupo la nombramos por el código.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ Página 6: atajos y problemas ============ -->
+<section class="pagina">
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">En la compu</div>
+      <h2>Atajos de teclado</h2>
+    </div>
+    <table class="atajos">
+      <tbody>
+        <tr><td><kbd>N</kbd></td><td>Nueva tarea</td></tr>
+        <tr><td><kbd>/</kbd></td><td>Buscar</td></tr>
+        <tr><td><kbd>M</kbd></td><td>Ver solo mis tareas</td></tr>
+        <tr><td><kbd>1</kbd> … <kbd>7</kbd></td><td>Cambiar de vista</td></tr>
+        <tr><td><kbd>Alt</kbd> + <kbd>←</kbd> <kbd>→</kbd></td><td>Pasar la tarjeta seleccionada a otra columna</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Cerrar el panel o la ventana abierta</td></tr>
+        <tr><td><kbd>?</kbd></td><td>Ver todos los atajos</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bloque">
+    <div class="cab-seccion">
+      <div class="etq">Si algo no anda</div>
+      <h2>Problemas comunes</h2>
+    </div>
+    <table>
+      <thead><tr><th>Si pasa esto</th><th>Hacé esto</th></tr></thead>
+      <tbody>
+        <tr><td>No me llega el email</td><td>Esperá unos minutos (se mandan pocos por hora) y fijate en spam. Revisá que usaste el mismo email que invitaron.</td></tr>
+        <tr><td>“Tu email todavía no está invitado”</td><td>Pedí que te agreguen en Equipo → Invitar al equipo y después tocá <strong>Probar de nuevo</strong>.</td></tr>
+        <tr><td>Me olvidé la contraseña</td><td>En la pantalla de entrada tocá “¿Te olvidaste la contraseña?”.</td></tr>
+        <tr><td>“No pudimos conectar con la base de datos”</td><td>Avisale a quien administra el tablero. Si nadie entró en 7 días la base se pausa, y se reactiva con un botón.</td></tr>
+        <tr><td>No veo lo que cambió otro</td><td>Recargá la página.</td></tr>
+        <tr><td>Quiero cambiar mi nombre o color</td><td>Tocá tu nombre arriba a la derecha → <strong>Editar mi perfil</strong>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="cierre">
+    <span>Tablero del equipo · <span class="mono">tablero-kanban-beryl.vercel.app</span></span>
+    <span>Guía v1 · 23 de setiembre de 2026</span>
+  </footer>
+</section>
+
+</body>
+</html>
