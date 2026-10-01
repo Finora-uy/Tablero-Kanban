@@ -6,10 +6,13 @@ function Cabecera({ ctx, e, vista, setVista, editable, alModal, alCambiarYo }) {
   return html`<header class="cabecera">
     <div class="cab-fila">
       <div class="marca">
-        <${Chispa} t=${34} />
-        <div><h1>Tablero del equipo</h1><div class="etiqueta-mono">Finora · Proyecto final · ORT Uruguay</div></div>
+        <span class="marca-logo"><${LogoFinora} alto=${26} /></span>
+        <span class="marca-isotipo"><${Isotipo} t=${30} titulo="Finora" /></span>
+        <span class="marca-sep" aria-hidden="true"></span>
+        <div><h1>Tablero del equipo</h1><div class="etiqueta-mono">Proyecto final · ORT Uruguay</div></div>
       </div>
       <div class="cab-acciones">
+        <${ChipCronometro} ctx=${ctx} alIr=${() => setVista('horas')} />
         ${otros.length > 0 && html`<div class="en-linea" title=${otros.map(x => nombreDe(x.id, ctx) + (x.esYo ? ' (vos)' : '')).join(', ')}>
           <span class="punto-vivo" aria-hidden="true"></span><span class="texto">En línea</span>
           <span class="avatares">${otros.slice(0, 5).map(x => html`<${Avatar} key=${x.id} m=${ctx.integrantes.get(x.id)} t=${26} titulo=${nombreDe(x.id, ctx) + (x.esYo ? ' (vos)' : '')} />`)}</span>
@@ -162,7 +165,7 @@ function App() {
     }
     else if (k === '?') setModal({ tipo: 'ayuda' });
     else if (k === 'm' || k === 'M') setFiltros({ ...filtros, mias: !filtros.mias });
-    else if (/^[1-7]$/.test(k)) setVista(VISTAS[Number(k) - 1].id);
+    else if (/^[1-9]$/.test(k)) setVista(VISTAS[Number(k) - 1].id);
   };
   useEffect(() => {
     const f = ev => teclas.current(ev);
@@ -178,10 +181,10 @@ function App() {
 
   let cuerpo;
   if (!listo) {
-    cuerpo = html`<div class="cargando"><${Chispa} t=${48} /><p>Conectando con el tablero…</p></div>`;
+    cuerpo = html`<div class="cargando"><${Isotipo} t=${48} /><p>Conectando con el tablero…</p></div>`;
   } else if (vista === 'tablero') {
     cuerpo = html`<div class="tablero-envoltura">
-      ${sinTareas && !filtros.archivadas && html`<div class="aviso-vacio"><${Chispa} t=${28} /><p><strong>Todavía no hay tareas.</strong> ${editable ? 'Creá la primera con N o con el botón Nueva tarea, o escribila directo en una columna.' : 'Cuando el equipo cargue tareas, van a aparecer acá.'}</p></div>`}
+      ${sinTareas && !filtros.archivadas && html`<div class="aviso-vacio"><${Isotipo} t=${26} /><p><strong>Todavía no hay tareas.</strong> ${editable ? 'Creá la primera con N o con el botón Nueva tarea, o escribila directo en una columna.' : 'Cuando el equipo cargue tareas, van a aparecer acá.'}</p></div>`}
       ${!sinTareas && hayFiltros && !tareasFiltradas.length && html`<div class="aviso-vacio"><p>Ninguna tarea coincide con los filtros.</p><button class="btn btn-chico" onClick=${limpiarFiltros}>Limpiar filtros</button></div>`}
       <${Tablero} ctx=${ctx} tareas=${tareasFiltradas} carril=${carril} editable=${editable && !filtros.archivadas} alAbrir=${setAbierta} alNueva=${alNueva} />
     </div>`;
@@ -195,6 +198,10 @@ function App() {
     cuerpo = html`<${VistaResumen} ctx=${ctx} alAbrir=${setAbierta} alFiltrar=${filtrarPor} />`;
   } else if (vista === 'equipo') {
     cuerpo = html`<${VistaEquipo} ctx=${ctx} e=${e} editable=${editable} alEditar=${id => setModal({ tipo: 'integrante', id })} alVerTareas=${id => filtrarPor({ integrantes: [id] })} alSoyYo=${() => { setSoloMirar(false); setForzarSumate(true); }} />`;
+  } else if (vista === 'disponibilidad') {
+    cuerpo = html`<${VistaDisponibilidad} ctx=${ctx} editable=${editable} />`;
+  } else if (vista === 'horas') {
+    cuerpo = html`<${VistaHoras} ctx=${ctx} editable=${editable} alAbrir=${setAbierta} />`;
   } else {
     cuerpo = html`<${VistaActividad} ctx=${ctx} alAbrir=${setAbierta} />`;
   }

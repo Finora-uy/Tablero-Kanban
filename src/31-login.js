@@ -15,8 +15,8 @@ const urlSitio = () => location.origin + location.pathname;
 
 function MarcaAcceso({ bajada }) {
   return html`<div class="acceso-marca">
-    <${Chispa} t=${52} />
-    <div class="etiqueta-mono">Finora · Proyecto final · ORT Uruguay</div>
+    <${LogoFinora} alto=${44} />
+    <div class="etiqueta-mono">Proyecto final · ORT Uruguay</div>
     <h1>Tablero del equipo</h1>
     ${bajada && html`<p>${bajada}</p>`}
   </div>`;
@@ -145,10 +145,10 @@ function RaizWeb({ cliente }) {
   useEffect(() => { if (permiso === 'si' && sesion) conectarDatosWeb(cliente, sesion.user); }, [permiso]);
 
   const salir = html`<button class="btn" onClick=${async () => { await cliente.auth.signOut(); location.reload(); }}><${Icono} n="salir" t=${15} />Cerrar sesión</button>`;
-  if (sesion === undefined) return html`<div class="cargando"><${Chispa} t=${48} /><p>Cargando…</p></div>`;
+  if (sesion === undefined) return html`<div class="cargando"><${Isotipo} t=${48} /><p>Cargando…</p></div>`;
   if (sesion && recuperando) return html`<${PantallaNuevaClave} cliente=${cliente} alListo=${() => setRecuperando(false)} />`;
   if (!sesion) return html`<${PantallaAcceso} cliente=${cliente} />`;
-  if (permiso === null) return html`<div class="cargando"><${Chispa} t=${48} /><p>Verificando tu acceso…</p></div>`;
+  if (permiso === null) return html`<div class="cargando"><${Isotipo} t=${48} /><p>Verificando tu acceso…</p></div>`;
   if (permiso === 'no') {
     return html`<${PantallaAviso} titulo="Tu email todavía no está invitado"
       texto=${`Entraste como ${sesion.user.email}, pero ese email no está en la lista del equipo. Pedile a alguien del grupo que te sume desde Equipo → Invitar al equipo, y después tocá "Probar de nuevo".`}

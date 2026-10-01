@@ -54,7 +54,7 @@ function ModalSumate({ ctx, e, alCerrar }) {
   const pie = html`<button class="btn btn-fantasma" onClick=${() => alCerrar(true)}>Solo mirar por ahora</button>
     <button class="btn btn-primario" disabled=${!nombre.trim() || enviando} onClick=${sumarme}>Sumarme al tablero</button>`;
   return html`<${Modal} titulo="Sumate al tablero de Finora" alCerrar=${() => alCerrar(true)} ancho=${540} pie=${pie}>
-    <div class="bienvenida-chispa"><${Chispa} t=${44} /><p class="tenue">Así te ve el resto del equipo en las tareas, los comentarios y el resumen. Lo podés cambiar después desde Equipo.</p></div>
+    <div class="bienvenida-logo"><${Isotipo} t=${44} /><p class="tenue">Así te ve el resto del equipo en las tareas, los comentarios y el resumen. Lo podés cambiar después desde Equipo.</p></div>
     ${libres.length > 0 && html`<div class="campo"><span class="campo-etq">¿Ya te sumaron? Elegí tu nombre</span>
       <div class="lista-miembros">${libres.map(m => html`<button key=${m.id} class="chip-btn" onClick=${async () => { await acciones.soyYo(m.id); avisar(`Hola, ${m.nombre}.`); alCerrar(false); }}><${Avatar} m=${m} t=${22} />${m.nombre}</button>`)}</div>
       <p class="tenue" style="font-size:12.5px">O creá tu perfil:</p></div>`}
@@ -131,11 +131,12 @@ function ModalHito({ ctx, id, alCerrar }) {
 /* ===== Ajustes ===== */
 function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
   const [sec, setSec] = useState(seccionInicial);
-  const [cfg, setCfg] = useState(() => copiaProfunda(ctx.config));
+  // Las etapas y trabajos pueden no estar guardados todavía: se parte de lo que se ve en pantalla
+  const [inicial] = useState(() => JSON.stringify({ ...ctx.config, etapas: ctx.etapas, trabajos: ctx.trabajos }));
+  const [cfg, setCfg] = useState(() => JSON.parse(inicial));
   const [guardando, setGuardando] = useState(false);
-  const cambiado = JSON.stringify(cfg) !== JSON.stringify(ctx.config);
+  const cambiado = JSON.stringify(cfg) !== inicial;
   const setCol = (i, cambios) => setCfg(c => ({ ...c, columnas: c.columnas.map((x, j) => j === i ? { ...x, ...cambios } : x) }));
-  const setEtq = (i, cambios) => setCfg(c => ({ ...c, etiquetas: c.etiquetas.map((x, j) => j === i ? { ...x, ...cambios } : x) }));
   const moverCol = (i, d) => setCfg(c => { const l = [...c.columnas]; const j = i + d; if (j < 0 || j >= l.length) return c; [l[i], l[j]] = [l[j], l[i]]; return { ...c, columnas: l }; });
   const cuantas = colId => ctx.tareas.filter(t => t.columna === colId).length;
   const guardarlo = async () => {
@@ -144,6 +145,8 @@ function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
       prefijo: (cfg.prefijo || 'FIN').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6) || 'FIN',
       columnas: cfg.columnas.map(c => ({ ...c, nombre: c.nombre.trim() || 'Sin nombre', limiteWip: Math.max(0, parseInt(c.limiteWip, 10) || 0) })),
       etiquetas: cfg.etiquetas.map(x => ({ ...x, nombre: x.nombre.trim() || 'Etiqueta' })),
+      etapas: cfg.etapas.map(x => ({ ...x, nombre: x.nombre.trim() || 'Etapa' })),
+      trabajos: cfg.trabajos.map(x => ({ ...x, nombre: x.nombre.trim() || 'Trabajo' })),
     };
     if (!limpia.columnas.some(c => c.final)) limpia.columnas[limpia.columnas.length - 1].final = true;
     setGuardando(true);
@@ -155,7 +158,7 @@ function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
     : html`<button class="btn btn-fantasma" onClick=${alCerrar}>Cancelar</button><button class="btn btn-primario" disabled=${!cambiado || guardando} onClick=${guardarlo}>Guardar cambios</button>`;
   return html`<${Modal} titulo="Ajustes del tablero" alCerrar=${alCerrar} ancho=${640} pie=${pie}>
     <div class="subpestanas" role="group" aria-label="Secciones">
-      ${[['columnas', 'Columnas'], ['etiquetas', 'Etiquetas'], ['general', 'General'], ['respaldo', 'Respaldo']].map(([k, n]) => html`<button key=${k} aria-pressed=${sec === k} onClick=${() => setSec(k)}>${n}</button>`)}
+      ${[['columnas', 'Columnas'], ['etiquetas', 'Etiquetas'], ['etapas', 'Etapas'], ['trabajos', 'Trabajos'], ['general', 'General'], ['respaldo', 'Respaldo']].map(([k, n]) => html`<button key=${k} aria-pressed=${sec === k} onClick=${() => setSec(k)}>${n}</button>`)}
     </div>
     ${sec === 'columnas' && html`<p>El límite de trabajo en curso (WIP) avisa cuando una columna se llena. Poné 0 para no tener límite. La columna final es la que cuenta como hecha.</p>
       ${cfg.columnas.map((c, i) => html`<div class="fila-col" key=${c.id}>
@@ -171,20 +174,34 @@ function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
       </div>`)}
       <div><button class="btn btn-chico" onClick=${() => setCfg(s => ({ ...s, columnas: [...s.columnas, { id: 'col-' + uid().slice(0, 8), nombre: 'Nueva columna', limiteWip: 0 }] }))}><${Icono} n="mas" t=${14} />Agregar columna</button></div>`}
     ${sec === 'etiquetas' && html`<p>Las etiquetas agrupan tareas por área. Borrar una la saca del filtro, pero no toca las tareas.</p>
-      ${cfg.etiquetas.map((x, i) => html`<div class="fila-edit" key=${x.id}>
-        <div class="fila" style="flex-wrap:nowrap">
-          <select class="entrada" id=${'cfg-etc-' + x.id} style="width:auto" aria-label="Color" value=${x.color} onChange=${e => setEtq(i, { color: e.target.value })}>${COLORES.map(c => html`<option value=${c.id}>${c.nombre}</option>`)}</select>
-          <span class="chip sin-punto" style=${`--c:var(--c-${x.color});width:14px;padding:0;height:14px;border-radius:50%;background:var(--c-${x.color})`} aria-hidden="true"></span>
-          <input class="entrada" id=${'cfg-etq-' + x.id} type="text" aria-label="Nombre de la etiqueta" value=${x.nombre} onInput=${e => setEtq(i, { nombre: e.target.value })} />
-        </div>
-        <button class="btn-icono chico" aria-label=${'Borrar ' + x.nombre} onClick=${() => setCfg(s => ({ ...s, etiquetas: s.etiquetas.filter((_, j) => j !== i) }))}><${Icono} n="basura" t=${14} /></button>
-      </div>`)}
-      <div><button class="btn btn-chico" onClick=${() => setCfg(s => ({ ...s, etiquetas: [...s.etiquetas, { id: 'et-' + uid().slice(0, 8), nombre: 'Nueva etiqueta', color: COLORES[s.etiquetas.length % COLORES.length].id }] }))}><${Icono} n="mas" t=${14} />Agregar etiqueta</button></div>`}
+      <${EditorLista} items=${cfg.etiquetas} alCambiar=${v => setCfg(s => ({ ...s, etiquetas: v }))} pref="et" nuevo="Nueva etiqueta" />`}
+    ${sec === 'etapas' && html`<p>Las etapas son las fases del proyecto. Se eligen al cargar horas y ordenan los reportes. Borrar una no borra las horas: quedan como "Sin etapa".</p>
+      <${EditorLista} items=${cfg.etapas} alCambiar=${v => setCfg(s => ({ ...s, etapas: v }))} pref="eta" nuevo="Nueva etapa" />`}
+    ${sec === 'trabajos' && html`<p>Los trabajos son el tipo de tarea que hiciste: reunión, programación, redacción… Se eligen al cargar horas.</p>
+      <${EditorLista} items=${cfg.trabajos} alCambiar=${v => setCfg(s => ({ ...s, trabajos: v }))} pref="tra" nuevo="Nuevo trabajo" />`}
     ${sec === 'general' && html`<div class="campo"><label for="cfg-prefijo">Prefijo de los códigos</label>
       <input class="entrada mono" id="cfg-prefijo" type="text" maxlength="6" style="max-width:160px" value=${cfg.prefijo} onInput=${e => setCfg(s => ({ ...s, prefijo: e.target.value }))} />
       <p class="tenue" style="font-size:12.5px">Las tareas se numeran solas: ${((cfg.prefijo || 'FIN').replace(/[^A-Za-z0-9]/g, '').toUpperCase() || 'FIN')}-1, ${((cfg.prefijo || 'FIN').replace(/[^A-Za-z0-9]/g, '').toUpperCase() || 'FIN')}-2… Sirve para nombrarlas en el chat del grupo.</p></div>`}
     ${sec === 'respaldo' && html`<${Respaldo} ctx=${ctx} />`}
   <//>`;
+}
+
+// Lista editable de nombre + color (etiquetas, etapas y trabajos)
+function EditorLista({ items, alCambiar, pref, nuevo }) {
+  const set = (i, cambios) => alCambiar(items.map((x, j) => (j === i ? { ...x, ...cambios } : x)));
+  const mover = (i, d) => { const l = [...items], j = i + d; if (j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; alCambiar(l); };
+  return html`${items.map((x, i) => html`<div class="fila-edit" key=${x.id}>
+      <div class="fila" style="flex-wrap:nowrap">
+        <select class="entrada" id=${`cfg-${pref}-c-${x.id}`} style="width:auto" aria-label="Color" value=${x.color} onChange=${e => set(i, { color: e.target.value })}>${COLORES.map(c => html`<option value=${c.id}>${c.nombre}</option>`)}</select>
+        <span class="leyenda-marca" style=${`width:14px;height:14px;border-radius:50%;background:var(--c-${x.color})`} aria-hidden="true"></span>
+        <input class="entrada" id=${`cfg-${pref}-n-${x.id}`} type="text" aria-label="Nombre" value=${x.nombre} onInput=${e => set(i, { nombre: e.target.value })} />
+      </div>
+      <span class="fila" style="gap:2px;flex-wrap:nowrap">
+        <button class="btn-icono chico" aria-label="Subir" title="Subir" disabled=${i === 0} onClick=${() => mover(i, -1)}><${Icono} n="subir" t=${14} /></button>
+        <button class="btn-icono chico" aria-label=${'Borrar ' + x.nombre} onClick=${() => alCambiar(items.filter((_, j) => j !== i))}><${Icono} n="basura" t=${14} /></button>
+      </span>
+    </div>`)}
+    <div><button class="btn btn-chico" onClick=${() => alCambiar([...items, { id: pref + '-' + uid().slice(0, 8), nombre: nuevo, color: COLORES[items.length % COLORES.length].id }])}><${Icono} n="mas" t=${14} />Agregar</button></div>`;
 }
 
 function Respaldo({ ctx }) {
@@ -214,7 +231,7 @@ function Respaldo({ ctx }) {
     setProgreso(null);
   };
   return html`<div class="campo"><span class="campo-etq">Exportar</span>
-      <p class="tenue">Bajá una copia completa (tareas, equipo, hitos y comentarios) o una planilla de tareas para Excel.</p>
+      <p class="tenue">Bajá una copia completa (tareas, equipo, hitos, comentarios, horas y disponibilidad) o una planilla de tareas para Excel.</p>
       ${puedeDescargar() ? html`<div class="fila">
         <button class="btn" onClick=${() => guardarArchivo(`tablero-finora-${hoyISO()}.json`, respaldoJSON(), 'application/json')}><${Icono} n="descargar" t=${15} />Respaldo completo (.json)</button>
         <button class="btn" onClick=${() => guardarArchivo(`tareas-finora-${hoyISO()}.csv`, tareasCSV(ctx), 'text/csv')}><${Icono} n="descargar" t=${15} />Tareas (.csv)</button>
@@ -236,7 +253,7 @@ function Respaldo({ ctx }) {
 /* ===== Ayuda ===== */
 function ModalAyuda({ alCerrar }) {
   const atajos = [
-    ['N', 'Nueva tarea'], ['/', 'Buscar'], ['M', 'Mostrar solo mis tareas'], ['1 … 7', 'Cambiar de vista'],
+    ['N', 'Nueva tarea'], ['/', 'Buscar'], ['M', 'Mostrar solo mis tareas'], ['1 … 9', 'Cambiar de vista'],
     ['Alt + ← →', 'Mover la tarjeta enfocada de columna'], ['Alt + ↑ ↓', 'Subir o bajar la tarjeta enfocada'],
     ['Enter', 'Abrir la tarjeta enfocada'], ['Esc', 'Cerrar'], ['?', 'Esta ayuda'],
   ];

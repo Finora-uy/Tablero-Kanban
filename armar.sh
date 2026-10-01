@@ -7,7 +7,7 @@ salida=finora-tablero.html
 {
   cat src/00-cabeza.html
   echo '<style>'
-  cat src/1[012]-*.css
+  cat src/1[01245]-*.css
   echo '</style>'
   echo '<div id="app"></div>'
   echo '<script src="https://cdn.jsdelivr.net/npm/preact@10.24.3/dist/preact.umd.js"></script>'

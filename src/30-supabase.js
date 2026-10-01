@@ -168,7 +168,7 @@ function conectarDatosWeb(cliente, user) {
     email: user.email,
     cerrarSesion: async () => { try { await cliente.auth.signOut(); } catch (_) {} location.reload(); },
   };
-  ['config', 'integrantes', 'tareas', 'comentarios', 'hitos'].forEach(abrirSuscripcion);
+  COLECCIONES.forEach(abrirSuscripcion);
   crearPresencia(cliente, user.id);
   notificar();
 }

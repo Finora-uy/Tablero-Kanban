@@ -7,7 +7,9 @@
 }
 .cab-fila { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .marca { display: flex; align-items: center; gap: 12px; min-width: 0; margin-right: auto; }
-.marca svg { flex: none; }
+.marca svg { flex: none; display: block; }
+.marca-isotipo { display: none; }
+.marca-sep { flex: none; width: 1px; height: 30px; background: var(--line-2); }
 .marca h1 { font-size: 19px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
 .marca .etiqueta-mono { font-size: 10.5px; }
 .cab-acciones { display: flex; align-items: center; gap: 6px; }
@@ -190,6 +192,10 @@ kbd {
   box-shadow: var(--shadow) !important; border-color: var(--focus) !important; opacity: .96;
 }
 @media (max-width: 640px) {
+  .cab-fila { flex-wrap: wrap; row-gap: 8px; }
+  .marca h1 { font-size: 17px; }
+  .marca-logo { display: none; }
+  .marca-isotipo { display: block; }
   .tablero { scroll-snap-type: x mandatory; gap: 10px; }
   .columna { flex-basis: 84vw; scroll-snap-align: center; }
   .marca .etiqueta-mono { display: none; }

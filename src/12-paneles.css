@@ -94,7 +94,7 @@ details[open] > summary { margin-bottom: 10px; }
   box-shadow: inset 0 0 0 2px var(--raised);
 }
 .muestra[aria-pressed="true"] { border-color: var(--text); }
-.bienvenida-chispa { display: flex; align-items: center; gap: 12px; }
+.bienvenida-logo { display: flex; align-items: center; gap: 12px; }
 .lista-miembros { display: flex; flex-wrap: wrap; gap: 8px; }
 .atajos { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; align-items: center; }
 .barra-progreso { height: 6px; border-radius: 6px; background: var(--blue-tint); overflow: hidden; }

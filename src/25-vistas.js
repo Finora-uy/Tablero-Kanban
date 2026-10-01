@@ -46,7 +46,7 @@ function VistaLista({ ctx, tareas, alAbrir, hayFiltros, alLimpiar }) {
 }
 function VacioVista({ hayFiltros, alLimpiar, texto }) {
   return html`<div class="vacio-vista">
-    <${Chispa} t=${40} />
+    <${Isotipo} t=${40} />
     <p>${hayFiltros ? 'Ninguna tarea coincide con los filtros.' : (texto || 'Todavía no hay tareas. Creá la primera con N o con el botón Nueva tarea.')}</p>
     ${hayFiltros && html`<button class="btn btn-chico" onClick=${alLimpiar}>Limpiar filtros</button>`}
   </div>`;

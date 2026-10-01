@@ -30,14 +30,14 @@ const RUTAS = {
   filtro: 'M4 5h16l-6 8v6l-4-2v-4z',
   vincular: 'M9 15l6-6M10 6l1-1a4 4 0 0 1 6 6l-1 1M14 18l-1 1a4 4 0 0 1-6-6l1-1',
   salir: 'M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10',
+  play: 'M7 5l12 7-12 7z',
+  stop: 'M6 6h12v12H6z',
+  lapiz: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+  grafico: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
   sobre: 'M3 6h18v12H3zM3 7l9 6 9-6',
 };
 function Icono({ n, t = 16, clase = '' }) {
   return html`<svg class=${'ic ' + clase} width=${t} height=${t} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${RUTAS[n]} /></svg>`;
-}
-// Isotipo "Llena": cuatro puntas de radio 22 sobre 48×48; manijas sobre los ejes a 0,387·r.
-function Chispa({ t = 30 }) {
-  return html`<svg width=${t} height=${t} viewBox="-6 -6 60 60" aria-hidden="true"><path fill="var(--amber)" d="M24 2C24 15.486 32.514 24 46 24C32.514 24 24 32.514 24 46C24 32.514 15.486 24 2 24C15.486 24 24 15.486 24 2Z" /></svg>`;
 }
 function Avatar({ m, t = 24, titulo }) {
   const nombre = m ? m.nombre : 'Ex integrante';

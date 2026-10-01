@@ -139,6 +139,7 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
         ${!editable && !(t.dependeDe || []).length && html`<p class="tenue">No depende de otras tareas.</p>`}
       </section>
 
+      <${HorasDeTarea} t=${t} ctx=${ctx} editable=${editable} />
       <${Enlaces} t=${t} editable=${editable} act=${act} />
       <${Comentarios} t=${t} ctx=${ctx} editable=${editable} />
 

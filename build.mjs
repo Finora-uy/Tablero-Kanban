@@ -30,9 +30,11 @@ const config = {
 if (/service_role/.test(config.anonKey)) throw new Error('La clave configurada es la service_role. Usá la anon o publishable.');
 
 const css = archivos.filter(f => /^1\d-.*\.css$/.test(f)).map(leer).join('\n');
-const js = archivos.filter(f => /^(2\d|3\d)-.*\.js$/.test(f) && f !== '29-arranque-claude.js').map(leer).join('\n');
+const js = archivos.filter(f => /^(2\d|3\d)[a-z]?-.*\.js$/.test(f) && f !== '29-arranque-claude.js').map(leer).join('\n');
 const cabeza = leer('00-cabeza.html');
-const chispa = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -6 60 60'><path fill='#C0843A' d='M24 2C24 15.486 32.514 24 46 24C32.514 24 24 32.514 24 46C24 32.514 15.486 24 2 24C15.486 24 24 15.486 24 2Z'/></svg>`;
+const logo = JSON.parse(readFileSync(join(src, 'logo-finora.json'), 'utf8')).isotipo;
+const favicon = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${logo.viewBox}'><style>.t{fill:#07132F}@media (prefers-color-scheme:dark){.t{fill:#EEF2F9}}</style>`
+  + `<path class='t' fill-rule='evenodd' d='${logo.tinta}'/><path fill='#C0843A' d='${logo.ambar}'/></svg>`;
 const configJS = JSON.stringify(config).replace(/</g, '\\u003c');
 
 const html = `<!doctype html>
@@ -43,7 +45,7 @@ const html = `<!doctype html>
 <meta name="description" content="Tablero Kanban del equipo de Finora: tareas, hitos y avance del proyecto final.">
 <meta name="theme-color" content="#07132F">
 <meta name="robots" content="noindex">
-<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(chispa)}">
+<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(favicon)}">
 ${cabeza}
 <style>
 [hidden] { display: none !important; }

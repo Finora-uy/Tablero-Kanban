@@ -90,7 +90,7 @@ const ESTIMACIONES = [1, 2, 3, 5, 8, 13];
 const VISTAS = [
   { id: 'tablero', nombre: 'Tablero' }, { id: 'lista', nombre: 'Lista' }, { id: 'calendario', nombre: 'Calendario' },
   { id: 'hitos', nombre: 'Hitos' }, { id: 'resumen', nombre: 'Resumen' }, { id: 'equipo', nombre: 'Equipo' },
-  { id: 'actividad', nombre: 'Actividad' },
+  { id: 'actividad', nombre: 'Actividad' }, { id: 'horas', nombre: 'Horas' }, { id: 'disponibilidad', nombre: 'Disponibilidad' },
 ];
 const CARRILES = [
   { id: 'ninguno', nombre: 'Sin carriles' }, { id: 'integrante', nombre: 'Por integrante' }, { id: 'prioridad', nombre: 'Por prioridad' },
@@ -114,6 +114,25 @@ const CONFIG_BASE = {
     { id: 'seguridad', nombre: 'Seguridad', color: 'naranja' },
     { id: 'ort', nombre: 'Académico ORT', color: 'mostaza' },
   ],
+  // Para la sección Horas: en qué etapa del proyecto y qué tipo de trabajo
+  etapas: [
+    { id: 'investigacion', nombre: 'Investigación', color: 'azul' },
+    { id: 'requerimientos', nombre: 'Requerimientos', color: 'verde' },
+    { id: 'diseno', nombre: 'Diseño', color: 'violeta' },
+    { id: 'desarrollo', nombre: 'Desarrollo', color: 'magenta' },
+    { id: 'pruebas', nombre: 'Pruebas', color: 'mostaza' },
+    { id: 'documentacion', nombre: 'Documentación', color: 'petroleo' },
+    { id: 'presentacion', nombre: 'Presentación', color: 'naranja' },
+  ],
+  trabajos: [
+    { id: 'reunion', nombre: 'Reunión', color: 'azul' },
+    { id: 'programacion', nombre: 'Programación', color: 'verde' },
+    { id: 'diseno-ui', nombre: 'Diseño de interfaz', color: 'violeta' },
+    { id: 'investigacion', nombre: 'Investigación', color: 'magenta' },
+    { id: 'redaccion', nombre: 'Redacción', color: 'mostaza' },
+    { id: 'testing', nombre: 'Testing', color: 'petroleo' },
+    { id: 'gestion', nombre: 'Gestión', color: 'naranja' },
+  ],
 };
 const SESION = uid();
 const ID_VALIDO = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
@@ -123,7 +142,8 @@ const estado = {
   modo: 'cargando',                 // 'nube' | 'local'
   config: null,
   integrantes: new Map(), tareas: new Map(), comentarios: new Map(), hitos: new Map(),
-  cargado: { config: false, integrantes: false, tareas: false, comentarios: false, hitos: false },
+  horas: new Map(), cronometros: new Map(), disponibilidad: new Map(), ausencias: new Map(),
+  cargado: { config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false },
   puedeEscribir: null, userId: null, yoId: leer('finora-yo'),
   pares: [], room: null, descargas: null,
   errorConexion: false, avisos: [],
@@ -298,7 +318,15 @@ function armarContexto(e) {
     if (t && !p.isMe) { const l = miradas.get(t) || []; if (!l.includes(m)) l.push(m); miradas.set(t, l); }
   }
   enLinea.sort((a, b) => (b.esYo ? 1 : 0) - (a.esYo ? 1 : 0));
+  // Horas: si la config guardada es anterior a esta sección, se usan las listas por defecto
+  const etapas = config.etapas || CONFIG_BASE.etapas;
+  const trabajos = config.trabajos || CONFIG_BASE.trabajos;
+  const horas = [...e.horas].map(([id, r]) => ({ ...r, id })).filter(r => r.inicio && r.fin && r.miembro);
+  const horasPorTarea = new Map();
+  for (const r of horas) if (r.tarea) horasPorTarea.set(r.tarea, (horasPorTarea.get(r.tarea) || 0) + (r.minutos || 0));
   return {
+    etapas, etapasPorId: new Map(etapas.map(x => [x.id, x])), trabajos, trabajosPorId: new Map(trabajos.map(x => [x.id, x])),
+    horas, horasPorTarea, cronometros: e.cronometros, disponibilidad: e.disponibilidad, ausencias: e.ausencias,
     config, columnas, finalId: finalCol && finalCol.id, colPorId: new Map(columnas.map(c => [c.id, c])),
     etiquetas: config.etiquetas || [], etiquetasPorId: new Map((config.etiquetas || []).map(x => [x.id, x])),
     prefijo: config.prefijo || 'FIN', tareas, porId, miembros, integrantes, hitos, hitosPorId: new Map(hitos.map(x => [x.id, x])),

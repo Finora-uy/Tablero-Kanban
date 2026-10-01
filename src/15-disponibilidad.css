@@ -1,0 +1,57 @@
+/* ===== Disponibilidad ===== */
+.vista.disponibilidad { grid-template-columns: minmax(0, 1fr); }
+.vista.disponibilidad .paneles > * { min-width: 0; }
+
+/* Tu semana */
+.editor-semana { gap: 12px; }
+.editor-semana .sub { margin-top: -6px; }
+.dias-semana { list-style: none; margin: 0; padding: 0; display: grid; }
+.dia-fila { display: grid; grid-template-columns: 96px minmax(0, 1fr) 56px; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.dia-fila:first-child { border-top: 0; }
+.dia-nombre { font-weight: 600; }
+.franjas { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.franja { display: inline-flex; align-items: center; gap: 2px; height: 30px; padding: 0 2px 0 10px; border-radius: 999px; background: var(--blue-tint); }
+.franja .mono { font-size: 13px; }
+.sin-franjas { font-size: 13px; }
+.franja-nueva { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.franja-nueva .entrada { width: 104px; min-height: 30px; height: 30px; padding-block: 2px; }
+.dia-total { text-align: right; color: var(--text-2); }
+@media (max-width: 640px) {
+  .dia-fila { grid-template-columns: minmax(0, 1fr) auto; }
+  .dia-fila .franjas { grid-column: 1 / -1; grid-row: 2; }
+}
+
+/* Selector de semana */
+.selector-semana { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Semana del equipo */
+.tabla-disp th, .tabla-disp td { white-space: nowrap; }
+.tabla-disp td.num { text-align: center; }
+.tabla-disp td:first-child, .tabla-disp th:first-child { text-align: left; }
+.celda-disp.ausente { background: var(--red-tint); color: var(--red-text); font-weight: 600; }
+.uso { display: inline-flex; align-items: center; gap: 8px; }
+.uso-barra { display: inline-block; width: 56px; height: 6px; border-radius: 6px; background: var(--blue-tint); overflow: hidden; }
+.uso-barra > span { display: block; height: 100%; background: var(--blue); border-radius: 6px; }
+
+/* Cuándo coincidimos */
+.mejor-momento { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: var(--blue-tint); }
+.mejor-momento .ic { color: var(--blue); margin-top: 2px; }
+.coincidencias .celda-calor { aspect-ratio: auto; height: 26px; }
+
+/* Días no disponibles */
+.aus-grid { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 900px) { .aus-grid { grid-template-columns: minmax(0, 1fr); } }
+.panel .cal-cab h3 { margin-right: auto; }
+.cal-mes { font-weight: 500; }
+.aus-celda { min-height: 84px; gap: 6px; }
+.aus-celda.elegible { cursor: pointer; }
+.aus-celda.elegible:hover { background: var(--card-2); }
+.aus-celda.elegible:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.aus-celda.yo-ausente { background: var(--red-tint); }
+.aus-yo { font-size: 11.5px; font-weight: 600; color: var(--red-text); }
+.aus-celda .avatares > .avatar { box-shadow: 0 0 0 2px var(--card); }
+@media (max-width: 640px) {
+  .aus-celda { min-height: 64px; padding: 4px; }
+  .aus-yo { display: none; }
+  .aus-celda .avatar { width: 16px !important; height: 16px !important; font-size: 8px !important; }
+}
