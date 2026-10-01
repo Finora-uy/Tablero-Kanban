@@ -31,6 +31,7 @@ const RUTAS = {
   vincular: 'M9 15l6-6M10 6l1-1a4 4 0 0 1 6 6l-1 1M14 18l-1 1a4 4 0 0 1-6-6l1-1',
   salir: 'M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10',
   play: 'M7 5l12 7-12 7z',
+  estrella: 'M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z',
   stop: 'M6 6h12v12H6z',
   lapiz: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
   grafico: 'M4 20V10M10 20V4M16 20v-7M22 20H2',

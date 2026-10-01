@@ -53,8 +53,9 @@ function VacioVista({ hayFiltros, alLimpiar, texto }) {
 }
 
 /* ===== Calendario ===== */
-function VistaCalendario({ ctx, tareas, alAbrir }) {
+function VistaCalendario({ ctx, tareas, alAbrir, editable }) {
   const angosto = useMedia('(max-width: 720px)');
+  const [fechaAbierta, setFechaAbierta] = useState(null);
   const [mes, setMes] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
   const mover = n => setMes(({ y, m }) => { const d = new Date(y, m + n, 1); return { y: d.getFullYear(), m: d.getMonth() }; });
   const primero = new Date(mes.y, mes.m, 1);
@@ -65,6 +66,14 @@ function VistaCalendario({ ctx, tareas, alAbrir }) {
   for (const t of tareas) if (t.vence) { if (!porDia.has(t.vence)) porDia.set(t.vence, []); porDia.get(t.vence).push(t); }
   const hitosPorDia = new Map();
   for (const x of ctx.hitos) if (x.fin) { if (!hitosPorDia.has(x.fin)) hitosPorDia.set(x.fin, []); hitosPorDia.get(x.fin).push(x); }
+  const ausPorDia = new Map();
+  for (const m of ctx.miembros) {
+    const dias = (ctx.ausencias.get(m.id) || {}).dias || {};
+    for (const [f, motivo] of Object.entries(dias)) { if (!ausPorDia.has(f)) ausPorDia.set(f, []); ausPorDia.get(f).push({ m, motivo }); }
+  }
+  const importantesPorDia = new Map();
+  for (const x of ctx.fechas) { if (!importantesPorDia.has(x.fecha)) importantesPorDia.set(x.fecha, []); importantesPorDia.get(x.fecha).push(x); }
+  const importantes = (iso, largo) => (importantesPorDia.get(iso) || []).map(x => html`<${FechaChip} key=${x.id} x=${x} largo=${largo} alAbrir=${setFechaAbierta} />`);
   const sinFecha = tareas.filter(t => !t.vence).length;
   const item = t => {
     const hecha = esHecha(t, ctx);
@@ -72,25 +81,39 @@ function VistaCalendario({ ctx, tareas, alAbrir }) {
     return html`<button key=${t.id} class=${cls} onClick=${() => alAbrir(t.id)} title=${`${codigo(t, ctx)} · ${t.titulo}`}><span class="mono">${codigo(t, ctx)}</span>${t.titulo}</button>`;
   };
   const hitoItem = x => html`<div key=${x.id} class="cal-hito" title=${'Hito: ' + x.nombre}><${Icono} n="bandera" t=${12} />${x.nombre}</div>`;
+  const ausItem = (iso, largo) => {
+    const l = ausPorDia.get(iso);
+    if (!l || !l.length) return null;
+    const detalle = l.map(x => x.m.nombre + (x.motivo ? ` (${x.motivo})` : '')).join(', ');
+    const texto = l.length === 1 ? `${l[0].m.nombre} no está` : `${l.length} no están`;
+    return html`<div key="aus" class="cal-aus" data-tip=${'No disponible: ' + detalle}>
+      <span class="avatares">${l.slice(0, 3).map(x => html`<${Avatar} key=${x.m.id} m=${x.m} t=${18} />`)}</span>
+      <span class="cal-aus-texto">${largo ? 'No disponible: ' + detalle : texto}</span>
+    </div>`;
+  };
   const cab = html`<div class="cal-cab">
     <h2>${mayus(MESES[mes.m])} ${mes.y}</h2>
+    ${editable && html`<button class="btn btn-chico" onClick=${() => setFechaAbierta({ fecha: ctx.hoy >= isoDe(primero) && ctx.hoy <= isoDe(new Date(mes.y, mes.m, diasMes)) ? ctx.hoy : isoDe(primero) })}><${Icono} n="estrella" t=${14} />Fecha importante</button>`}
     <button class="btn btn-chico" onClick=${() => { const d = new Date(); setMes({ y: d.getFullYear(), m: d.getMonth() }); }}>Hoy</button>
     <button class="btn-icono" aria-label="Mes anterior" onClick=${() => mover(-1)}><${Icono} n="izq" /></button>
     <button class="btn-icono" aria-label="Mes siguiente" onClick=${() => mover(1)}><${Icono} n="der" /></button>
-  </div>`;
+  </div>
+  <${ProximasFechas} ctx=${ctx} alAbrir=${setFechaAbierta} />`;
+  const modal = fechaAbierta && html`<${ModalFecha} ctx=${ctx} inicial=${fechaAbierta} editable=${editable} alCerrar=${() => setFechaAbierta(null)} />`;
+  const notaAus = html`<p class="tenue">Las estrellas son fechas importantes${editable ? ': agregalas con el botón o con el + de cada día' : ''}. Las caras en rojo marcan quién no está disponible ese día; cada uno lo marca en <strong>Disponibilidad</strong>.</p>`;
   const nota = sinFecha > 0 && html`<p class="tenue">${sinFecha === 1 ? '1 tarea no tiene' : `${sinFecha} tareas no tienen`} fecha de vencimiento y no aparece${sinFecha === 1 ? '' : 'n'} acá.</p>`;
   if (angosto) {
     const dias = [];
     for (let d = 1; d <= diasMes; d++) {
       const iso = isoDe(new Date(mes.y, mes.m, d));
-      if (porDia.has(iso) || hitosPorDia.has(iso)) dias.push(iso);
+      if (porDia.has(iso) || hitosPorDia.has(iso) || ausPorDia.has(iso) || importantesPorDia.has(iso)) dias.push(iso);
     }
     return html`<div class="vista">${cab}
       ${dias.length ? html`<div class="agenda">${dias.map(iso => html`<div class="agenda-dia" key=${iso}>
         <h3>${tituloDia(iso)}${iso === ctx.hoy ? '' : ' · ' + fechaCorta(iso)}</h3>
-        ${(hitosPorDia.get(iso) || []).map(hitoItem)}${(porDia.get(iso) || []).map(item)}
-      </div>`)}</div>` : html`<p class="tenue">No hay vencimientos ni hitos en ${MESES[mes.m]}.</p>`}
-      ${nota}
+        ${importantes(iso, true)}${ausItem(iso, true)}${(hitosPorDia.get(iso) || []).map(hitoItem)}${(porDia.get(iso) || []).map(item)}
+      </div>`)}</div>` : html`<p class="tenue">No hay fechas importantes, vencimientos, hitos ni ausencias en ${MESES[mes.m]}.</p>`}
+      ${notaAus}${nota}${modal}
     </div>`;
   }
   const celdas = [];
@@ -98,8 +121,11 @@ function VistaCalendario({ ctx, tareas, alAbrir }) {
     const d = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + i);
     const iso = isoDe(d);
     const fuera = d.getMonth() !== mes.m;
-    celdas.push(html`<div key=${iso} class=${'cal-celda' + (fuera ? ' fuera' : '') + (iso === ctx.hoy ? ' hoy' : '')}>
+    celdas.push(html`<div key=${iso} class=${'cal-celda' + (fuera ? ' fuera' : '') + (iso === ctx.hoy ? ' hoy' : '') + (importantesPorDia.has(iso) ? ' con-importante' : '')}>
       <span class="cal-num">${d.getDate()}</span>
+      ${editable && html`<button class="cal-agregar btn-icono chico" aria-label=${'Agregar una fecha importante el ' + fechaLarga(iso)} title="Agregar fecha importante" onClick=${() => setFechaAbierta({ fecha: iso })}><${Icono} n="mas" t=${13} /></button>`}
+      ${importantes(iso, false)}
+      ${ausItem(iso, false)}
       ${(hitosPorDia.get(iso) || []).map(hitoItem)}
       ${(porDia.get(iso) || []).map(item)}
     </div>`);
@@ -109,7 +135,7 @@ function VistaCalendario({ ctx, tareas, alAbrir }) {
       ${['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'].map(n => html`<div class="cal-dia-nombre etiqueta-mono" key=${n}>${n}</div>`)}
       ${celdas}
     </div>
-    ${nota}
+    ${notaAus}${nota}${modal}
   </div>`;
 }
 

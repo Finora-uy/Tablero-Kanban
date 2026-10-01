@@ -92,7 +92,11 @@
     sofi: { dias: { [habil(4)]: 'viaje', [habil(5)]: 'viaje', [habil(6)]: 'viaje' } },
     caro: { dias: { [habil(9)]: 'trabajo' } },
   };
-  const datos = { integrantes, tareas, comentarios, hitos, horas, cronometros, disponibilidad, ausencias };
+  const fechas = {
+    f1: { titulo: 'Reunión con el tutor', fecha: dia(5), hora: '18:30', tipo: 'tutor', nota: 'Llevar el avance de los requerimientos.' },
+    f2: { titulo: 'Entrega del anteproyecto', fecha: dia(20), hora: '23:59', tipo: 'entrega', nota: 'Se sube a Gestión.' },
+  };
+  const datos = { integrantes, tareas, comentarios, hitos, horas, cronometros, disponibilidad, ausencias, fechas };
   localStorage.setItem('finora-tablero-local-v1', JSON.stringify(datos));
   localStorage.setItem('finora-yo', 'emi');
   localStorage.setItem('finora-vista', 'tablero');

@@ -142,8 +142,8 @@ const estado = {
   modo: 'cargando',                 // 'nube' | 'local'
   config: null,
   integrantes: new Map(), tareas: new Map(), comentarios: new Map(), hitos: new Map(),
-  horas: new Map(), cronometros: new Map(), disponibilidad: new Map(), ausencias: new Map(),
-  cargado: { config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false },
+  horas: new Map(), cronometros: new Map(), disponibilidad: new Map(), ausencias: new Map(), fechas: new Map(),
+  cargado: { config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false },
   puedeEscribir: null, userId: null, yoId: leer('finora-yo'),
   pares: [], room: null, descargas: null,
   errorConexion: false, avisos: [],
@@ -327,6 +327,7 @@ function armarContexto(e) {
   return {
     etapas, etapasPorId: new Map(etapas.map(x => [x.id, x])), trabajos, trabajosPorId: new Map(trabajos.map(x => [x.id, x])),
     horas, horasPorTarea, cronometros: e.cronometros, disponibilidad: e.disponibilidad, ausencias: e.ausencias,
+    fechas: [...e.fechas].map(([id, x]) => ({ ...x, id })).filter(x => x.fecha).sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || ''))),
     config, columnas, finalId: finalCol && finalCol.id, colPorId: new Map(columnas.map(c => [c.id, c])),
     etiquetas: config.etiquetas || [], etiquetasPorId: new Map((config.etiquetas || []).map(x => [x.id, x])),
     prefijo: config.prefijo || 'FIN', tareas, porId, miembros, integrantes, hitos, hitosPorId: new Map(hitos.map(x => [x.id, x])),

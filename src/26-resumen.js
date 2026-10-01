@@ -59,6 +59,7 @@ function VistaResumen({ ctx, alAbrir, alFiltrar }) {
   }
   const proximas = abiertas.filter(t => t.vence && diasEntre(ctx.hoy, t.vence) <= 14).sort((a, b) => a.vence.localeCompare(b.vence)).slice(0, 8);
   const proxHito = ctx.hitos.find(x => x.fin && x.fin >= ctx.hoy);
+  const proxFecha = ctx.fechas.find(x => x.fecha >= ctx.hoy);
 
   const tile = (etq, valor, detalle, rojo, alClick) => html`<div class="tile">
     <span class="etiqueta-mono">${etq}</span>
@@ -86,6 +87,7 @@ function VistaResumen({ ctx, alAbrir, alFiltrar }) {
           <span class="crece">${t.titulo}</span><${Avatares} ids=${t.asignados || []} ctx=${ctx} /></button></li>`)}</ul>`
           : html`<p class="tenue">Nada vence en las próximas dos semanas.</p>`}
         ${proxHito && html`<p class="tenue" style="display:flex;gap:6px;align-items:center"><${Icono} n="bandera" t=${14} />Próximo hito: <strong style="color:var(--text)">${proxHito.nombre}</strong>, el ${fechaLarga(proxHito.fin)}</p>`}
+        ${proxFecha && html`<p class="tenue" style="display:flex;gap:6px;align-items:center"><${Icono} n="estrella" t=${14} />Próxima fecha importante: <strong style="color:var(--text)">${proxFecha.titulo}</strong>, el ${fechaLarga(proxFecha.fecha)}${proxFecha.hora ? ` a las ${proxFecha.hora}` : ''} (${cuantoFalta(proxFecha.fecha, ctx.hoy)})</p>`}
       </section>
     </div>
   </div>`;

@@ -191,7 +191,7 @@ function App() {
   } else if (vista === 'lista') {
     cuerpo = html`<${VistaLista} ctx=${ctx} tareas=${tareasFiltradas} alAbrir=${setAbierta} hayFiltros=${hayFiltros} alLimpiar=${limpiarFiltros} />`;
   } else if (vista === 'calendario') {
-    cuerpo = html`<${VistaCalendario} ctx=${ctx} tareas=${tareasFiltradas} alAbrir=${setAbierta} />`;
+    cuerpo = html`<${VistaCalendario} ctx=${ctx} tareas=${tareasFiltradas} alAbrir=${setAbierta} editable=${editable} />`;
   } else if (vista === 'hitos') {
     cuerpo = html`<${VistaHitos} ctx=${ctx} editable=${editable} alEditar=${id => setModal({ tipo: 'hito', id })} alVerTareas=${id => filtrarPor({ hito: id })} />`;
   } else if (vista === 'resumen') {
