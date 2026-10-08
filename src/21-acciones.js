@@ -160,6 +160,7 @@ function respaldoJSON() {
     app: 'tablero-finora', version: 1, exportado: ahoraISO(), config: estado.config || CONFIG_BASE,
     integrantes: obj(estado.integrantes), tareas: obj(estado.tareas), comentarios: obj(estado.comentarios), hitos: obj(estado.hitos),
     horas: obj(estado.horas), disponibilidad: obj(estado.disponibilidad), ausencias: obj(estado.ausencias), fechas: obj(estado.fechas),
+    roadmap: obj(estado.roadmap), roadmapFases: obj(estado.roadmapFases), roadmapItems: obj(estado.roadmapItems), roadmapPeriodos: obj(estado.roadmapPeriodos),
   }, null, 2);
 }
 function tareasCSV(ctx) {
@@ -198,7 +199,7 @@ function validarRespaldo(datos) {
   if (!datos || datos.app !== 'tablero-finora') throw new Error('El archivo no es un respaldo del Tablero Finora.');
   const ops = [];
   if (datos.config && Array.isArray(datos.config.columnas)) ops.push(['tablero/config', datos.config]);
-  for (const col of ['integrantes', 'hitos', 'tareas', 'comentarios', 'horas', 'disponibilidad', 'ausencias', 'fechas']) {
+  for (const col of ['integrantes', 'hitos', 'tareas', 'comentarios', 'horas', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos']) {
     for (const [id, d] of Object.entries(datos[col] || {})) {
       if (ID_VALIDO.test(id) && d && typeof d === 'object' && !Array.isArray(d)) ops.push([`${col}/${id}`, d]);
     }
@@ -213,7 +214,7 @@ async function importarRespaldo(ops, alProgresar) {
 }
 
 /* ===== Arranque: suscripciones y capacidades ===== */
-const COLECCIONES = ['config', 'integrantes', 'tareas', 'comentarios', 'hitos', 'horas', 'cronometros', 'disponibilidad', 'ausencias', 'fechas'];
+const COLECCIONES = ['config', 'integrantes', 'tareas', 'comentarios', 'hitos', 'horas', 'cronometros', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos'];
 const subs = {};
 function abrirSuscripcion(nombre) {
   if (subs[nombre]) { try { subs[nombre](); } catch (_) {} }

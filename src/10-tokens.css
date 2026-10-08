@@ -161,5 +161,6 @@ textarea.entrada { resize: vertical; line-height: 1.55; }
 }
 .tag.urgente { background: var(--red-tint); color: var(--red-text); }
 .tag.alta { background: var(--amber-tint); color: var(--amber-text); }
-.tag.media, .tag.baja { background: var(--card-2); color: var(--text-2); }
+.tag.media { background: var(--blue-tint); color: var(--link); }
+.tag.baja { background: var(--card-2); color: var(--text-2); }
 .tag.hecho { background: var(--green-tint); color: var(--green-text); }

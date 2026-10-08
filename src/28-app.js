@@ -198,6 +198,8 @@ function App() {
     cuerpo = html`<${VistaResumen} ctx=${ctx} alAbrir=${setAbierta} alFiltrar=${filtrarPor} />`;
   } else if (vista === 'equipo') {
     cuerpo = html`<${VistaEquipo} ctx=${ctx} e=${e} editable=${editable} alEditar=${id => setModal({ tipo: 'integrante', id })} alVerTareas=${id => filtrarPor({ integrantes: [id] })} alSoyYo=${() => { setSoloMirar(false); setForzarSumate(true); }} />`;
+  } else if (vista === 'roadmap') {
+    cuerpo = html`<${VistaRoadmap} ctx=${ctx} editable=${editable} alModal=${setModal} />`;
   } else if (vista === 'disponibilidad') {
     cuerpo = html`<${VistaDisponibilidad} ctx=${ctx} editable=${editable} />`;
   } else if (vista === 'horas') {

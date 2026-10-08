@@ -242,7 +242,7 @@ function Respaldo({ ctx }) {
       <input class="entrada" id="imp-archivo" type="file" accept=".json,application/json" onChange=${leerArchivo} disabled=${!!progreso} />
       ${error && html`<p style="color:var(--red-text)">${error}</p>`}
       ${ops && !progreso && html`<div class="confirmar-linea" style="background:var(--blue-tint)">
-        <span>Vas a importar ${contar('tareas/')} tareas, ${contar('integrantes/')} integrantes, ${contar('hitos/')} hitos y ${contar('comentarios/')} comentarios${ops.some(o => o[0] === 'tablero/config') ? ', más los ajustes' : ''}.</span>
+        <span>Vas a importar ${[['tareas/', 'tareas'], ['integrantes/', 'integrantes'], ['hitos/', 'hitos'], ['comentarios/', 'comentarios'], ['horas/', 'registros de horas'], ['roadmapFases/', 'fases del roadmap'], ['roadmapItems/', 'tareas e hitos del roadmap'], ['roadmapPeriodos/', 'ausencias y feriados del roadmap']].filter(([p]) => contar(p) > 0).map(([p, n]) => `${contar(p)} ${n}`).join(', ') || 'datos'}${ops.some(o => o[0] === 'tablero/config') ? ', más los ajustes' : ''}.</span>
         <button class="btn btn-primario btn-chico" onClick=${importar}>Importar</button>
         <button class="btn btn-fantasma btn-chico" onClick=${() => setOps(null)}>Cancelar</button></div>`}
       ${progreso && html`<div class="barra-progreso" role="progressbar" aria-valuenow=${progreso.hechos} aria-valuemax=${progreso.total}><div style=${`width:${progreso.hechos / progreso.total * 100}%`}></div></div>

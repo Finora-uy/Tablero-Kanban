@@ -23,7 +23,7 @@ function Tarjeta({ t, ctx, oculta, editable, alAbrir, alBajar, alTecla, alMenuCo
       <span class="derecha">
         ${mirando.length > 0 && html`<span class="t-mirando" title=${mirando.map(id => nombreDe(id, ctx)).join(', ') + ' la está mirando'}><${Icono} n="ojo" t=${13} /><${Avatares} ids=${mirando} ctx=${ctx} t=${16} max=${2} /></span>`}
         ${hecha ? html`<span class="tag hecho"><${Icono} n="check" t=${12} />Hecha</span>`
-          : (t.prioridad === 'urgente' || t.prioridad === 'alta') && html`<span class=${'tag ' + t.prioridad}>${PRIORIDAD[t.prioridad].nombre}</span>`}
+          : html`<span class=${'tag ' + (PRIORIDAD[t.prioridad] ? t.prioridad : 'media')} title="Prioridad">${(PRIORIDAD[t.prioridad] || PRIORIDAD.media).nombre}</span>`}
       </span>
     </div>
     <p class="t-titulo">${t.titulo}</p>

@@ -89,8 +89,8 @@ const ROLES = ['Producto', 'Diseño', 'Desarrollo', 'Datos', 'IA', 'Negocio', 'I
 const ESTIMACIONES = [1, 2, 3, 5, 8, 13];
 const VISTAS = [
   { id: 'tablero', nombre: 'Tablero' }, { id: 'lista', nombre: 'Lista' }, { id: 'calendario', nombre: 'Calendario' },
-  { id: 'hitos', nombre: 'Hitos' }, { id: 'resumen', nombre: 'Resumen' }, { id: 'equipo', nombre: 'Equipo' },
-  { id: 'actividad', nombre: 'Actividad' }, { id: 'horas', nombre: 'Horas' }, { id: 'disponibilidad', nombre: 'Disponibilidad' },
+  { id: 'hitos', nombre: 'Hitos' }, { id: 'roadmap', nombre: 'Roadmap' }, { id: 'resumen', nombre: 'Resumen' }, { id: 'equipo', nombre: 'Equipo' },
+  { id: 'horas', nombre: 'Horas' }, { id: 'disponibilidad', nombre: 'Disponibilidad' }, { id: 'actividad', nombre: 'Actividad' },
 ];
 const CARRILES = [
   { id: 'ninguno', nombre: 'Sin carriles' }, { id: 'integrante', nombre: 'Por integrante' }, { id: 'prioridad', nombre: 'Por prioridad' },
@@ -143,7 +143,8 @@ const estado = {
   config: null,
   integrantes: new Map(), tareas: new Map(), comentarios: new Map(), hitos: new Map(),
   horas: new Map(), cronometros: new Map(), disponibilidad: new Map(), ausencias: new Map(), fechas: new Map(),
-  cargado: { config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false },
+  roadmap: new Map(), roadmapFases: new Map(), roadmapItems: new Map(), roadmapPeriodos: new Map(),
+  cargado: { config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false, roadmap: false, roadmapFases: false, roadmapItems: false, roadmapPeriodos: false },
   puedeEscribir: null, userId: null, yoId: leer('finora-yo'),
   pares: [], room: null, descargas: null,
   errorConexion: false, avisos: [],
@@ -327,6 +328,12 @@ function armarContexto(e) {
   return {
     etapas, etapasPorId: new Map(etapas.map(x => [x.id, x])), trabajos, trabajosPorId: new Map(trabajos.map(x => [x.id, x])),
     horas, horasPorTarea, cronometros: e.cronometros, disponibilidad: e.disponibilidad, ausencias: e.ausencias,
+    roadmap: {
+      meta: e.roadmap.get('meta') || null,
+      fases: [...e.roadmapFases].map(([id, x]) => ({ ...x, id })).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)),
+      items: [...e.roadmapItems].map(([id, x]) => ({ ...x, id })).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)),
+      periodos: [...e.roadmapPeriodos].map(([id, x]) => ({ ...x, id })).sort((a, b) => (a.desde || '').localeCompare(b.desde || '')),
+    },
     fechas: [...e.fechas].map(([id, x]) => ({ ...x, id })).filter(x => x.fecha).sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || ''))),
     config, columnas, finalId: finalCol && finalCol.id, colPorId: new Map(columnas.map(c => [c.id, c])),
     etiquetas: config.etiquetas || [], etiquetasPorId: new Map((config.etiquetas || []).map(x => [x.id, x])),
