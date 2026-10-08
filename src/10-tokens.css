@@ -26,6 +26,7 @@
   --red: #F0605D;         /* Rojo quiebre */
   --red-text: #F0605D;
   --red-tint: rgba(240, 96, 93, .14);
+  --yellow-tint: rgba(234, 190, 60, .18); --yellow-text: #E9C24E;
   --scrim: rgba(2, 7, 20, .62);
   --shadow: 0 18px 48px rgba(0, 0, 0, .5);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
@@ -48,7 +49,7 @@
     color-scheme: light;
     --bg: #F5F7FB; --col: #EAEEF6; --card: #FCFDFF; --card-2: #F3F6FB; --raised: #FCFDFF; --input: #FCFDFF;
     --line: #D8DFEB; --line-2: #BCC7DA; --text: #07132F; --text-2: #5A6685; --text-3: #6B7693;
-    --amber-text: #8A5A1E; --link: #2B5FC7; --green-text: #1B7A55; --red-text: #C2413E;
+    --amber-text: #8A5A1E; --link: #2B5FC7; --green-text: #1B7A55; --red-text: #C2413E; --yellow-tint: rgba(234, 179, 8, .2); --yellow-text: #7A5A00;
     --scrim: rgba(7, 19, 47, .32); --shadow: 0 18px 48px rgba(7, 19, 47, .16); --shadow-sm: 0 1px 2px rgba(7, 19, 47, .08);
     --c-azul: #2a78d6; --c-verde: #1baf7a; --c-violeta: #4a3aa7; --c-magenta: #e87ba4;
     --c-mostaza: #eda100; --c-petroleo: #0a87b8; --c-naranja: #eb6834; --c-pizarra: #5A6685;
@@ -58,7 +59,7 @@
   color-scheme: light;
   --bg: #F5F7FB; --col: #EAEEF6; --card: #FCFDFF; --card-2: #F3F6FB; --raised: #FCFDFF; --input: #FCFDFF;
   --line: #D8DFEB; --line-2: #BCC7DA; --text: #07132F; --text-2: #5A6685; --text-3: #6B7693;
-  --amber-text: #8A5A1E; --link: #2B5FC7; --green-text: #1B7A55; --red-text: #C2413E;
+  --amber-text: #8A5A1E; --link: #2B5FC7; --green-text: #1B7A55; --red-text: #C2413E; --yellow-tint: rgba(234, 179, 8, .2); --yellow-text: #7A5A00;
   --scrim: rgba(7, 19, 47, .32); --shadow: 0 18px 48px rgba(7, 19, 47, .16); --shadow-sm: 0 1px 2px rgba(7, 19, 47, .08);
   --c-azul: #2a78d6; --c-verde: #1baf7a; --c-violeta: #4a3aa7; --c-magenta: #e87ba4;
   --c-mostaza: #eda100; --c-petroleo: #0a87b8; --c-naranja: #eb6834; --c-pizarra: #5A6685;
@@ -159,8 +160,8 @@ textarea.entrada { resize: vertical; line-height: 1.55; }
   display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 6px; border-radius: 5px;
   font: 500 10.5px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
 }
-.tag.urgente { background: var(--red-tint); color: var(--red-text); }
-.tag.alta { background: var(--amber-tint); color: var(--amber-text); }
-.tag.media { background: var(--blue-tint); color: var(--link); }
+.tag.urgente { background: #9B1C1F; color: #FFFFFF; }
+.tag.alta { background: var(--red-tint); color: var(--red-text); }
+.tag.media { background: var(--yellow-tint); color: var(--yellow-text); }
 .tag.baja { background: var(--card-2); color: var(--text-2); }
 .tag.hecho { background: var(--green-tint); color: var(--green-text); }
