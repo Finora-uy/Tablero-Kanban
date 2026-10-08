@@ -107,6 +107,8 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
         ${t.bloqueada && html`<span class="prop-etq"></span><input class="entrada" id="det-motivo" type="text" placeholder="¿Qué la frena? Ej.: esperando acceso al Odoo de prueba" disabled=${!editable} ...${motivo} />`}
       </div>
 
+      <${RevisionOk} t=${t} ctx=${ctx} editable=${editable} />
+
       <section class="seccion">
         <div class="seccion-cab"><h3>Descripción</h3></div>
         <textarea class="entrada" id="det-desc" ref=${descRef} rows="4" disabled=${!editable}
@@ -222,5 +224,27 @@ function Comentarios({ t, ctx, editable }) {
         onInput=${e => setTexto(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); enviar(); } }}></textarea>
       <div class="fila-fin"><button class="btn btn-chico" onClick=${enviar} disabled=${!texto.trim() || enviando}>Comentar</button></div>
     </div>`}
+  </section>`;
+}
+
+// OK de cada responsable antes de pasar a la columna final (solo si hay 2 o más)
+function RevisionOk({ t, ctx, editable }) {
+  const asig = (t.asignados || []).filter(id => ctx.integrantes.has(id));
+  if (asig.length < 2 || !esRevision(t.columna)) return null;
+  const ok = t.aprobaciones || [];
+  const listos = asig.filter(id => ok.includes(id)).length;
+  const soyResponsable = ctx.yo && asig.includes(ctx.yo);
+  const diYo = ctx.yo && ok.includes(ctx.yo);
+  const final = ctx.colPorId.get(ctx.finalId);
+  return html`<section class=${'seccion revision-ok' + (listos === asig.length ? ' completa' : '')}>
+    <div class="seccion-cab"><h3>OK de los responsables</h3><span class="mono tenue">${listos}/${asig.length}</span></div>
+    <p class="tenue">${listos === asig.length ? `Están todos los OK: ya se puede pasar a ${final ? final.nombre : 'la columna final'}.` : `Para pasarla a ${final ? final.nombre : 'la columna final'}, cada responsable tiene que dar su OK.`}</p>
+    <ul class="lista-simple">${asig.map(id => html`<li key=${id}>
+      <${Avatar} m=${ctx.integrantes.get(id)} t=${22} /><span class="crece">${nombreDe(id, ctx)}${id === ctx.yo ? ' (vos)' : ''}</span>
+      ${ok.includes(id) ? html`<span class="tag hecho"><${Icono} n="check" t=${11} />OK</span>` : html`<span class="tag baja">Pendiente</span>`}
+    </li>`)}</ul>
+    ${editable && soyResponsable && html`<div>${diYo
+      ? html`<button class="btn btn-chico" onClick=${() => acciones.darOk(t.id, false)}>Retirar mi OK</button>`
+      : html`<button class="btn btn-primario btn-chico" onClick=${() => acciones.darOk(t.id, true)}><${Icono} n="check" t=${14} />Dar mi OK</button>`}</div>`}
   </section>`;
 }

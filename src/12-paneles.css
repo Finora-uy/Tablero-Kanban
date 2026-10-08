@@ -63,6 +63,8 @@ details[open] > summary { margin-bottom: 10px; }
   padding: 10px 18px calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line);
 }
 .detalle-pie .meta { font-size: 12px; color: var(--text-3); margin-right: auto; }
+.revision-ok { padding: 12px 14px; border-radius: 10px; background: var(--yellow-tint); }
+.revision-ok.completa { background: var(--green-tint); }
 .confirmar-linea {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%;
   padding: 10px 12px; border-radius: 8px; background: var(--red-tint); font-size: 13px;

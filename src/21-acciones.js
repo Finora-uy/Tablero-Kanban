@@ -20,6 +20,19 @@ async function conManejo(promesa) {
 }
 const yo = () => resolverYo(estado);
 const esFinal = colId => { const cfg = estado.config || CONFIG_BASE; const f = cfg.columnas.find(c => c.final) || cfg.columnas[cfg.columnas.length - 1]; return f && f.id === colId; };
+// La columna de revisión es la que está justo antes de la final (En revisión)
+const esRevision = colId => {
+  const cfg = estado.config || CONFIG_BASE;
+  const i = cfg.columnas.findIndex(c => c.final), fin = i >= 0 ? i : cfg.columnas.length - 1;
+  return fin > 0 && cfg.columnas[fin - 1].id === colId;
+};
+// Responsables que todavía no dieron el OK (solo cuenta si hay 2 o más)
+const faltanOk = t => {
+  const asig = (t.asignados || []).filter(id => estado.integrantes.has(id));
+  if (asig.length < 2) return [];
+  const ok = t.aprobaciones || [];
+  return asig.filter(id => !ok.includes(id));
+};
 const nombreColumna = colId => { const cfg = estado.config || CONFIG_BASE; const c = cfg.columnas.find(x => x.id === colId); return c ? c.nombre : 'otra columna'; };
 const nombreMiembro = id => { const m = estado.integrantes.get(id); return m ? m.nombre : 'alguien'; };
 const tareaPorId = id => { const t = estado.tareas.get(id); return t ? { ...t, id } : null; };
@@ -68,6 +81,16 @@ const acciones = {
     let que = extra.__que || null;
     delete cambios.__que;
     if (colId && colId !== t.columna) {
+      // No pasa a la columna final si faltan OK de algún responsable
+      if (esFinal(colId)) {
+        const faltan = faltanOk(t);
+        if (faltan.length) {
+          avisar(`Para pasarla a ${nombreColumna(colId)} falta el OK de ${faltan.map(nombreMiembro).join(', ')}. Cada uno lo da en el detalle de la tarea, en ${(estado.config || CONFIG_BASE).columnas.find(c => esRevision(c.id))?.nombre || 'revisión'}.`, 'error');
+          return Promise.resolve(false);
+        }
+      }
+      // Cada vez que cambia a otra columna que no es la final, los OK empiezan de cero
+      if (!esFinal(colId) && (t.aprobaciones || []).length) cambios.aprobaciones = [];
       const ahora = ahoraISO();
       cambios.columna = colId; cambios.entroEnColumna = ahora; cambios.terminadaEn = esFinal(colId) ? ahora : null;
       que = `la movió a ${nombreColumna(colId)}`;
@@ -95,6 +118,13 @@ const acciones = {
     });
     if (r) avisar(`Creaste la copia ${(estado.config || CONFIG_BASE).prefijo}-${r.numero}.`);
     return r;
+  },
+  darOk(id, dar) {
+    const t = estado.tareas.get(id), yoId = yo();
+    if (!t || !yoId) return Promise.resolve(false);
+    const ok = (t.aprobaciones || []).filter(x => x !== yoId);
+    if (dar) ok.push(yoId);
+    return acciones.actualizarTarea(id, { aprobaciones: ok }, dar ? 'dio el OK' : 'retiró su OK');
   },
   archivar(id, archivar) { return acciones.actualizarTarea(id, { archivada: archivar }, archivar ? 'la archivó' : 'la sacó del archivo'); },
   async eliminarTarea(id) {

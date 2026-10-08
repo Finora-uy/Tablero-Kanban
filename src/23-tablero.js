@@ -14,7 +14,10 @@ function Tarjeta({ t, ctx, oculta, editable, alAbrir, alBajar, alTecla, alMenuCo
   const cod = codigo(t, ctx);
   const cls = 'tarjeta' + (oculta ? ' origen' : '') + (bloq ? ' bloqueada' : '') + (hecha ? ' hecha' : '') + (editable ? '' : ' solo-lectura');
   const motivo = t.bloqueada ? (t.motivoBloqueo || 'Bloqueada') : `Espera a ${pendientes.map(d => codigo(d, ctx)).join(', ')}`;
-  const tieneMeta = t.vence || items.length || nCom || t.estimacion;
+  const asigVivos = (t.asignados || []).filter(id => ctx.integrantes.has(id));
+  const pideOk = esRevision(t.columna) && asigVivos.length >= 2;
+  const nOk = pideOk ? asigVivos.filter(id => (t.aprobaciones || []).includes(id)).length : 0;
+  const tieneMeta = t.vence || items.length || nCom || t.estimacion || pideOk;
   return html`<article class=${cls} data-tarea=${t.id} tabindex="0" role="button"
       aria-label=${`${cod}: ${t.titulo}. ${ctx.colPorId.get(t.columna)?.nombre || ''}${bloq ? '. Bloqueada' : ''}`}
       onPointerDown=${ev => alBajar(ev, t)} onClick=${() => alAbrir(t.id)} onKeyDown=${ev => alTecla(ev, t)} onContextMenu=${alMenuContexto}>
@@ -35,6 +38,7 @@ function Tarjeta({ t, ctx, oculta, editable, alAbrir, alBajar, alTecla, alMenuCo
         ${items.length > 0 && html`<span class=${'t-dato' + (hechos === items.length ? ' completo' : '')} title="Subtareas y criterios completos"><${Icono} n="checklist" t=${13} />${hechos}/${items.length}</span>`}
         ${nCom > 0 && html`<span class="t-dato" title=${nCom === 1 ? '1 comentario' : nCom + ' comentarios'}><${Icono} n="comentario" t=${13} />${nCom}</span>`}
         ${t.estimacion != null && html`<span class="t-dato" title="Estimación en puntos">${t.estimacion} pts</span>`}
+        ${pideOk && html`<span class=${'t-ok' + (nOk === asigVivos.length ? ' completo' : '')} title=${`${nOk} de ${asigVivos.length} responsables dieron el OK`}><${Icono} n="check" t=${12} />OK ${nOk}/${asigVivos.length}</span>`}
       </div>
       <${Avatares} ids=${t.asignados || []} ctx=${ctx} />
     </div>`}
@@ -248,7 +252,7 @@ function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva }) {
     if (justo) {
       const ids = lista.map(x => x.id);
       ids.splice(d.indice, 0, t.id);
-      acciones.moverTarea(t.id, d.col, d.indice * 1024 + 1024, extra).then(() => acciones.renumerar(d.col, ids));
+      acciones.moverTarea(t.id, d.col, d.indice * 1024 + 1024, extra).then(ok => ok && acciones.renumerar(d.col, ids));
     } else {
       acciones.moverTarea(t.id, d.col, orden, extra);
     }
