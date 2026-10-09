@@ -101,7 +101,8 @@ export default async function handler(req, res) {
     }
 
     // 5) Mandar un mail por persona
-    const sitio = process.env.SITE_URL || `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
+    // Siempre la dirección pública, nunca la desde la que se pidió (puede ser una interna de Vercel, protegida)
+    const sitio = (process.env.SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? 'https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL : '') || `https://${req.headers['x-forwarded-host'] || req.headers.host}`).replace(/\/$/, '');
     const prefijo = (cfg && cfg.prefijo) || 'FIN';
     const enviados = [], fallidos = [];
     for (const id of objetivos) {

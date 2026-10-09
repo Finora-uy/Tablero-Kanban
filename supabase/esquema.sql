@@ -150,6 +150,13 @@ grant execute on function public.verificar_acceso() to authenticated;
 grant execute on function public.siguiente_numero(integer) to authenticated;
 grant execute on function public.actualizar_doc(text, text, jsonb) to authenticated;
 
+-- El servicio de recordatorios por email (api/recordar-ok.js) usa la clave secret de Supabase,
+-- que entra como rol service_role: necesita permiso explícito sobre estas tablas y funciones.
+grant usage on schema public to service_role;
+grant select, insert, update, delete on public.docs to service_role;
+grant select on public.equipo_permitido to service_role;
+grant execute on function public.actualizar_doc(text, text, jsonb) to service_role;
+
 -- ---------- Reglas por fila (RLS) ----------
 alter table public.docs enable row level security;
 alter table public.equipo_permitido enable row level security;
