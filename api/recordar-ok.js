@@ -10,9 +10,11 @@ const urlBase = () => (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPAB
 
 async function supabase(ruta, opciones = {}, token) {
   const clave = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Las claves nuevas (sb_secret_…) NO son un JWT: van solo en `apikey`. Las viejas (service_role) también van como Bearer.
+  const autorizacion = token ? `Bearer ${token}` : (clave && clave.startsWith('sb_') ? null : `Bearer ${clave}`);
   const r = await fetch(urlBase() + ruta, {
     ...opciones,
-    headers: { apikey: clave, Authorization: `Bearer ${token || clave}`, 'Content-Type': 'application/json', ...(opciones.headers || {}) },
+    headers: { apikey: clave, ...(autorizacion ? { Authorization: autorizacion } : {}), 'Content-Type': 'application/json', ...(opciones.headers || {}) },
   });
   const texto = await r.text();
   let datos = null;
@@ -54,7 +56,12 @@ export default async function handler(req, res) {
     if (!u.ok || !u.datos || !u.datos.id) return res.status(401).json({ error: 'Tu sesión venció. Recargá la página.' });
     const emailQuien = String(u.datos.email || '').toLowerCase();
     const invitado = await supabase(`/rest/v1/equipo_permitido?email=eq.${encodeURIComponent(emailQuien)}&select=email`);
-    if (!u.datos.email_confirmed_at || !invitado.ok || !invitado.datos || !invitado.datos.length) return res.status(403).json({ error: 'Tu cuenta no tiene acceso al tablero.' });
+    if (!invitado.ok) {
+      // Es un problema de configuración (clave de Supabase), no de la cuenta de quien pide
+      console.error('No se pudo leer equipo_permitido', invitado.status, JSON.stringify(invitado.datos));
+      return res.status(500).json({ error: 'El servicio no pudo verificar tu acceso: revisá la clave SUPABASE_SERVICE_ROLE_KEY en Vercel.' });
+    }
+    if (!u.datos.email_confirmed_at || !invitado.datos || !invitado.datos.length) return res.status(403).json({ error: 'Tu email no está en la lista de invitados del equipo.' });
 
     // 2) Qué se pide
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
