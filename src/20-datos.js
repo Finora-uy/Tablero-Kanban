@@ -85,7 +85,15 @@ const TIPOS_HITO = [
   { id: 'entrega', nombre: 'Entrega ORT' }, { id: 'sprint', nombre: 'Sprint' },
   { id: 'reunion', nombre: 'Reunión' }, { id: 'otro', nombre: 'Otro' },
 ];
-const ROLES = ['Producto', 'Diseño', 'Desarrollo', 'Datos', 'IA', 'Negocio', 'Investigación', 'Coordinación'];
+// Roles del proyecto, definidos por el equipo. `clave` sirve para reconocerlos aunque se escriban distinto.
+const ROLES_PROYECTO = [
+  { nombre: 'Gerente de proyecto', clave: 'gerente' },
+  { nombre: 'Arquitecto', clave: 'arquitect' },
+  { nombre: 'Ingeniería de requerimientos', clave: 'requerimientos' },
+  { nombre: 'SQA', clave: 'sqa' },
+  { nombre: 'SCM', clave: 'scm' },
+];
+const ROLES = ROLES_PROYECTO.map(r => r.nombre);
 const ESTIMACIONES = [1, 2, 3, 5, 8, 13];
 const VISTAS = [
   { id: 'tablero', nombre: 'Tablero' }, { id: 'lista', nombre: 'Lista' }, { id: 'calendario', nombre: 'Calendario' },
@@ -125,15 +133,31 @@ const CONFIG_BASE = {
     { id: 'presentacion', nombre: 'Presentación', color: 'naranja' },
   ],
   trabajos: [
-    { id: 'reunion', nombre: 'Reunión', color: 'azul' },
     { id: 'programacion', nombre: 'Programación', color: 'verde' },
     { id: 'diseno-ui', nombre: 'Diseño de interfaz', color: 'violeta' },
-    { id: 'investigacion', nombre: 'Investigación', color: 'magenta' },
+    { id: 'investigacion', nombre: 'Investigación', color: 'pizarra' },
     { id: 'redaccion', nombre: 'Redacción', color: 'mostaza' },
     { id: 'testing', nombre: 'Testing', color: 'petroleo' },
-    { id: 'gestion', nombre: 'Gestión', color: 'naranja' },
+    { id: 'gestion', nombre: 'Gestión', color: 'azul' },
+    ...[
+      { id: 'reunion-interna', nombre: 'Reunión interna', color: 'azul' },
+      { id: 'reunion-cliente', nombre: 'Reunión con cliente', color: 'naranja' },
+      { id: 'reunion-tutor', nombre: 'Reunión con tutor', color: 'magenta' },
+    ].map(x => ({ ...x, grupo: 'Reuniones', fijo: true })),
   ],
 };
+// Los tres tags de reuniones están siempre, aunque la config guardada sea anterior.
+// "Reunión" a secas (la versión vieja) queda solo para los registros que ya la usan.
+const GRUPO_REUNIONES = CONFIG_BASE.trabajos.filter(x => x.grupo === 'Reuniones');
+function armarTrabajos(guardados, horasMap) {
+  const base = (guardados || CONFIG_BASE.trabajos).filter(x => x.id !== 'reunion' && !GRUPO_REUNIONES.some(g => g.id === x.id));
+  const reuniones = GRUPO_REUNIONES.map(g => ({ ...g, ...((guardados || []).find(x => x.id === g.id) || {}), grupo: g.grupo, fijo: true }));
+  const lista = [...base, ...reuniones];
+  for (const r of horasMap.values()) {
+    if (r.trabajo === 'reunion') { lista.push({ id: 'reunion', nombre: 'Reunión (sin especificar)', color: 'pizarra', grupo: 'Reuniones', legado: true }); break; }
+  }
+  return lista;
+}
 const SESION = uid();
 const ID_VALIDO = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
 
@@ -321,7 +345,7 @@ function armarContexto(e) {
   enLinea.sort((a, b) => (b.esYo ? 1 : 0) - (a.esYo ? 1 : 0));
   // Horas: si la config guardada es anterior a esta sección, se usan las listas por defecto
   const etapas = config.etapas || CONFIG_BASE.etapas;
-  const trabajos = config.trabajos || CONFIG_BASE.trabajos;
+  const trabajos = armarTrabajos(config.trabajos, e.horas);
   const horas = [...e.horas].map(([id, r]) => ({ ...r, id })).filter(r => r.inicio && r.fin && r.miembro);
   const horasPorTarea = new Map();
   for (const r of horas) if (r.tarea) horasPorTarea.set(r.tarea, (horasPorTarea.get(r.tarea) || 0) + (r.minutos || 0));

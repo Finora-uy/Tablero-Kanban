@@ -94,6 +94,21 @@ function VistaResumen({ ctx, alAbrir, alFiltrar }) {
 }
 
 /* ===== Equipo ===== */
+// Quién tiene cada rol del proyecto (se reconoce por lo que dice el campo "Rol" de cada perfil)
+function RolesProyecto({ ctx }) {
+  return html`<section class="panel roles-proyecto" aria-label="Roles del proyecto">
+    <h3>Roles del proyecto</h3>
+    <ul class="roles-lista">${ROLES_PROYECTO.map(r => {
+      const quienes = ctx.miembros.filter(m => normalizar(m.rol).includes(r.clave));
+      return html`<li key=${r.clave}>
+        <span class="etiqueta-mono">${r.nombre}</span>
+        ${quienes.length ? html`<span class="rol-quien">${quienes.map(m => html`<span class="rol-persona" key=${m.id}><${Avatar} m=${m} t=${22} />${m.nombre}</span>`)}</span>`
+          : html`<span class="tenue">Sin asignar</span>`}
+      </li>`;
+    })}</ul>
+  </section>`;
+}
+
 function VistaEquipo({ ctx, e, editable, alEditar, alVerTareas, alSoyYo }) {
   const activas = ctx.tareas.filter(t => !t.archivada);
   return html`<div class="vista">
@@ -101,6 +116,7 @@ function VistaEquipo({ ctx, e, editable, alEditar, alVerTareas, alSoyYo }) {
       <div><h2>Equipo</h2><p>Cada uno se suma la primera vez que entra. También podés agregar a alguien que todavía no entró: cuando abra el tablero, elige su nombre.</p></div>
       ${editable && html`<button class="btn btn-primario" onClick=${() => alEditar(null)}><${Icono} n="mas" />Sumar integrante</button>`}
     </div>
+    <${RolesProyecto} ctx=${ctx} />
     ${ctx.miembros.length === 0 && html`<div class="vacio-vista"><${Icono} n="usuarios" t=${28} /><p>Todavía no hay nadie. Sumate primero y después invitá al resto.</p>${editable && html`<button class="btn btn-chico" onClick=${alSoyYo}>Sumarme</button>`}</div>`}
     <div class="equipo">${ctx.miembros.map(m => {
       const suyas = activas.filter(t => (t.asignados || []).includes(m.id));

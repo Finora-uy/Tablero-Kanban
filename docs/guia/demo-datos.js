@@ -3,9 +3,9 @@
   const dia = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
   const hace = h => new Date(Date.now() - h * 3600e3).toISOString();
   const integrantes = {
-    emi: { nombre: 'Emi', rol: 'Datos', color: 'azul', userId: null },
-    sofi: { nombre: 'Sofi', rol: 'Diseño', color: 'magenta', userId: null },
-    juan: { nombre: 'Juan', rol: 'Desarrollo', color: 'verde', userId: null },
+    emi: { nombre: 'Emi', rol: 'Gerente de proyecto', color: 'azul', userId: null },
+    sofi: { nombre: 'Sofi', rol: 'Ingeniería de requerimientos', color: 'magenta', userId: null },
+    juan: { nombre: 'Juan', rol: 'SQA', color: 'verde', userId: null },
     caro: { nombre: 'Caro', rol: 'IA', color: 'violeta', userId: null },
   };
   const base = (n, o) => ({
@@ -45,7 +45,7 @@
     juan: { dias: [0.8, 0.8, 0.7, 0.9, 0.4, 0.1, 0.2], hora: 15, etapas: ['desarrollo', 'pruebas'] },
     caro: { dias: [0.3, 0.4, 0.5, 0.4, 0.3, 0.6, 0.9], hora: 21, etapas: ['desarrollo', 'investigacion'] },
   };
-  const trabajosPor = { investigacion: ['investigacion', 'reunion'], requerimientos: ['redaccion', 'reunion'], diseno: ['diseno-ui', 'reunion'],
+  const trabajosPor = { investigacion: ['investigacion', 'reunion-cliente'], requerimientos: ['redaccion', 'reunion-interna'], diseno: ['diseno-ui', 'reunion-tutor'],
     desarrollo: ['programacion', 'programacion', 'testing'], pruebas: ['testing'], documentacion: ['redaccion'], presentacion: ['redaccion', 'gestion'] };
   const textos = {
     investigacion: ['Leer sobre modelos de proyección de caja', 'Entrevista con la dueña de una pyme', 'Comparar Odoo con planillas'],
@@ -77,6 +77,7 @@
       }
     }
   }
+  horas['h-viejo'] = { miembro: 'emi', inicio: new Date(Date.now() - 5 * 864e5).toISOString(), fin: new Date(Date.now() - 5 * 864e5 + 3600e3).toISOString(), minutos: 60, fecha: isoLocal(new Date(Date.now() - 5 * 864e5)), etapa: 'requerimientos', trabajo: 'reunion', tarea: null, descripcion: 'Reunión de antes del cambio', creadoPor: 'emi', creadoEn: new Date().toISOString(), actualizadoEn: new Date().toISOString() };
   const cronometros = { emi: { inicio: hace(0.7), descripcion: 'Ordenar los requerimientos de la alerta de caja', etapa: 'requerimientos', trabajo: 'redaccion', tarea: 't5', userId: null } };
   const fr = (desde, hasta) => ({ desde, hasta });
   const disponibilidad = {

@@ -214,6 +214,11 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .lista-prox button:focus-visible { outline: 2px solid var(--focus); }
 .lista-prox .crece { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
+.roles-proyecto { gap: 12px; }
+.roles-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 20px; }
+.roles-lista li { display: grid; gap: 6px; align-content: start; }
+.rol-quien { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.rol-persona { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; }
 .equipo { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .miembro { padding: 16px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); display: grid; gap: 12px; align-content: start; }
 .miembro-cab { display: flex; align-items: center; gap: 12px; }

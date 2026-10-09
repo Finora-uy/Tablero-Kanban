@@ -132,7 +132,7 @@ function ModalHito({ ctx, id, alCerrar }) {
 function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
   const [sec, setSec] = useState(seccionInicial);
   // Las etapas y trabajos pueden no estar guardados todavía: se parte de lo que se ve en pantalla
-  const [inicial] = useState(() => JSON.stringify({ ...ctx.config, etapas: ctx.etapas, trabajos: ctx.trabajos }));
+  const [inicial] = useState(() => JSON.stringify({ ...ctx.config, etapas: ctx.etapas, trabajos: ctx.trabajos.filter(x => !x.legado) }));
   const [cfg, setCfg] = useState(() => JSON.parse(inicial));
   const [guardando, setGuardando] = useState(false);
   const cambiado = JSON.stringify(cfg) !== inicial;
@@ -177,7 +177,7 @@ function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
       <${EditorLista} items=${cfg.etiquetas} alCambiar=${v => setCfg(s => ({ ...s, etiquetas: v }))} pref="et" nuevo="Nueva etiqueta" />`}
     ${sec === 'etapas' && html`<p>Las etapas son las fases del proyecto. Se eligen al cargar horas y ordenan los reportes. Borrar una no borra las horas: quedan como "Sin etapa".</p>
       <${EditorLista} items=${cfg.etapas} alCambiar=${v => setCfg(s => ({ ...s, etapas: v }))} pref="eta" nuevo="Nueva etapa" />`}
-    ${sec === 'trabajos' && html`<p>Los trabajos son el tipo de tarea que hiciste: reunión, programación, redacción… Se eligen al cargar horas.</p>
+    ${sec === 'trabajos' && html`<p>Los trabajos son el tipo de tarea que hiciste: programación, redacción, reuniones… Se eligen al cargar horas. Los tres tags de <strong>Reuniones</strong> son fijos: los podés renombrar pero no borrar.</p>
       <${EditorLista} items=${cfg.trabajos} alCambiar=${v => setCfg(s => ({ ...s, trabajos: v }))} pref="tra" nuevo="Nuevo trabajo" />`}
     ${sec === 'general' && html`<div class="campo"><label for="cfg-prefijo">Prefijo de los códigos</label>
       <input class="entrada mono" id="cfg-prefijo" type="text" maxlength="6" style="max-width:160px" value=${cfg.prefijo} onInput=${e => setCfg(s => ({ ...s, prefijo: e.target.value }))} />
@@ -198,7 +198,7 @@ function EditorLista({ items, alCambiar, pref, nuevo }) {
       </div>
       <span class="fila" style="gap:2px;flex-wrap:nowrap">
         <button class="btn-icono chico" aria-label="Subir" title="Subir" disabled=${i === 0} onClick=${() => mover(i, -1)}><${Icono} n="subir" t=${14} /></button>
-        <button class="btn-icono chico" aria-label=${'Borrar ' + x.nombre} onClick=${() => alCambiar(items.filter((_, j) => j !== i))}><${Icono} n="basura" t=${14} /></button>
+        ${x.fijo ? html`<span class="tag baja" title="Estos tags se pueden renombrar, pero no borrar">Fijo</span>` : html`<button class="btn-icono chico" aria-label=${'Borrar ' + x.nombre} onClick=${() => alCambiar(items.filter((_, j) => j !== i))}><${Icono} n="basura" t=${14} /></button>`}
       </span>
     </div>`)}
     <div><button class="btn btn-chico" onClick=${() => alCambiar([...items, { id: pref + '-' + uid().slice(0, 8), nombre: nuevo, color: COLORES[items.length % COLORES.length].id }])}><${Icono} n="mas" t=${14} />Agregar</button></div>`;

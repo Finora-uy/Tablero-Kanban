@@ -11,7 +11,10 @@ function SelectoresRegistro({ ctx, valor, alCambiar, idBase }) {
       <option value="">Sin etapa</option>${ctx.etapas.map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}
     </select>
     <select class="entrada" id=${idBase + '-trabajo'} aria-label="Trabajo" value=${valor.trabajo || ''} onChange=${e => alCambiar({ trabajo: e.target.value || null })}>
-      <option value="">Sin trabajo</option>${ctx.trabajos.map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}
+      <option value="">Sin trabajo</option>
+      ${ctx.trabajos.filter(x => !x.grupo && !x.legado).map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}
+      ${[...new Set(ctx.trabajos.filter(x => x.grupo).map(x => x.grupo))].map(g => html`<optgroup key=${g} label=${g}>
+        ${ctx.trabajos.filter(x => x.grupo === g && (!x.legado || x.id === valor.trabajo)).map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}</optgroup>`)}
     </select>
     <select class="entrada" id=${idBase + '-tarea'} aria-label="Tarea del tablero" value=${valor.tarea || ''} onChange=${e => alCambiar({ tarea: e.target.value || null })}>
       <option value="">Sin tarea del tablero</option><${OpcionesTarea} ctx=${ctx} />
@@ -191,6 +194,58 @@ function ModalRegistro({ ctx, r, alCerrar }) {
 
 /* ----- Reportes ----- */
 const FILTRO_HORAS_BASE = { periodo: '30', desde: '', hasta: '', personas: [], etapas: [], trabajos: [] };
+/* ----- Carga horaria de reuniones ----- */
+function PanelReuniones({ ctx, regs, personas, totalMin }) {
+  const series = ctx.trabajos.filter(x => x.grupo === 'Reuniones').map(x => ({ id: x.id, nombre: x.nombre, color: `var(--c-${x.color})` }));
+  const ids = new Set(series.map(x => x.id));
+  const reu = regs.filter(r => ids.has(r.trabajo));
+  const total = reu.reduce((a, r) => a + (r.minutos || 0), 0);
+  if (!total) {
+    return html`<section class="panel ancho"><h3>Carga horaria de reuniones</h3>
+      <p class="tenue">No hay reuniones cargadas en este período o con estos filtros. Se cargan en <strong>Registro</strong> eligiendo el trabajo «Reunión interna», «Reunión con cliente» o «Reunión con tutor».</p></section>`;
+  }
+  const porTipo = new Map(), porPersona = new Map(), porSemana = new Map();
+  for (const r of reu) {
+    const m = r.minutos || 0;
+    porTipo.set(r.trabajo, (porTipo.get(r.trabajo) || 0) + m);
+    if (!porPersona.has(r.miembro)) porPersona.set(r.miembro, new Map());
+    const pp = porPersona.get(r.miembro); pp.set(r.trabajo, (pp.get(r.trabajo) || 0) + m);
+    const sem = lunesISO(r.fecha);
+    if (!porSemana.has(sem)) porSemana.set(sem, new Map());
+    const ps = porSemana.get(sem); ps.set(r.trabajo, (ps.get(r.trabajo) || 0) + m);
+  }
+  const usadas = series.filter(s => porTipo.has(s.id));
+  const filas = personas.filter(p => porPersona.has(p.id)).map(p => {
+    const valores = porPersona.get(p.id);
+    return { id: p.id, nombre: p.nombre, valores, total: [...valores.values()].reduce((a, b) => a + b, 0),
+      etiqueta: html`${p.m ? html`<${Avatar} m=${p.m} t=${20} />` : null}<span>${p.nombre}</span>` };
+  }).sort((a, b) => b.total - a.total);
+  const claves = [...porSemana.keys()].sort();
+  const semanas = [];
+  for (const d = aFecha(claves[0]); isoDe(d) <= claves[claves.length - 1]; d.setDate(d.getDate() + 7)) semanas.push(isoDe(d));
+  const paso = Math.max(1, Math.ceil(semanas.length / 12));
+  const datos = semanas.map((s, i) => {
+    const valores = porSemana.get(s) || new Map();
+    return { id: s, nombre: 'Semana del ' + fechaLarga(s), etq: i % paso === 0 ? `${aFecha(s).getDate()}/${aFecha(s).getMonth() + 1}` : '', total: [...valores.values()].reduce((a, b) => a + b, 0), valores };
+  });
+  const maxTipo = maxEntrada(porTipo);
+  const tipoMax = series.find(s => s.id === maxTipo[0]);
+  return html`<section class="panel ancho"><h3>Carga horaria de reuniones</h3>
+    <p class="sub">Cuánto tiempo se va en reuniones, según con quién: interna del equipo, con clientes o con el tutor</p>
+    <div class="reu-resumen">
+      <div><span class="etiqueta-mono">Horas en reuniones</span><strong>${horasTexto(total)}</strong></div>
+      <div><span class="etiqueta-mono">Del total de horas</span><strong>${pct(total, totalMin)} %</strong></div>
+      ${usadas.map(s => html`<div key=${s.id}><span class="etiqueta-mono"><span class="leyenda-marca" style=${`background:${s.color}`}></span> ${s.nombre}</span><strong>${horasTexto(porTipo.get(s.id))}</strong></div>`)}
+    </div>
+    <div class="reu-grid">
+      <div><h4 class="reu-sub">Por persona</h4><${BarrasApiladas} filas=${filas} series=${usadas} /></div>
+      <div><h4 class="reu-sub">Por semana</h4><${Columnas} datos=${datos} series=${usadas} alto=${150} /></div>
+    </div>
+    <${Leyenda} items=${usadas} />
+    <p class="tenue" style="font-size:12.5px">Lo que más tiempo lleva: ${tipoMax ? tipoMax.nombre.toLowerCase() : ''} (${pct(maxTipo[1], total)} % de las reuniones).</p>
+  </section>`;
+}
+
 function ReportesHoras({ ctx, alAbrir }) {
   const [f, setFS] = useState(() => { try { return { ...FILTRO_HORAS_BASE, ...JSON.parse(leer('finora-horas-filtros') || '{}') }; } catch (_) { return { ...FILTRO_HORAS_BASE }; } });
   const setF = c => setFS(s => { const n = { ...s, ...c }; guardar('finora-horas-filtros', JSON.stringify(n)); return n; });
@@ -303,6 +358,7 @@ function ReportesHoras({ ctx, alAbrir }) {
         <${AreaSemanal} puntos=${puntos} series=${personasCon} activos=${activos} />
         <${Leyenda} items=${personasCon} activos=${activos} alAlternar=${id => setOcultos(o => (o.includes(id) ? o.filter(x => x !== id) : [...o, id]))} />
       </section>
+      <${PanelReuniones} ctx=${ctx} regs=${regs} personas=${personas} totalMin=${est.total} />
       <section class="panel"><h3>Por trabajo</h3><${BarrasApiladas} filas=${filasEtapa(trabajos, est.porTrabajo)} series=${trabajos} /></section>
       <section class="panel"><h3>Tareas con más horas</h3><p class="sub">${horasTexto(est.conTarea)} vinculadas a tareas del tablero</p>
         ${tareasTop.length ? html`<ul class="lista-prox">${tareasTop.map(x => html`<li key=${x.id}><button onClick=${() => alAbrir(x.id)}>
