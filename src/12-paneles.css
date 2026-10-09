@@ -64,6 +64,7 @@ details[open] > summary { margin-bottom: 10px; }
 }
 .detalle-pie .meta { font-size: 12px; color: var(--text-3); margin-right: auto; }
 .revision-ok { padding: 12px 14px; border-radius: 10px; background: var(--yellow-tint); }
+.revision-ok .recordado { font-size: 12px; white-space: nowrap; }
 .revision-ok.completa { background: var(--green-tint); }
 .confirmar-linea {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%;

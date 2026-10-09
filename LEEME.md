@@ -86,6 +86,24 @@ En Vercel, andá a **Deployments**, abrí el menú **⋯** del último deploy y 
 
 ---
 
+## Recordatorios por email (opcional)
+
+En una tarea con varios responsables, el botón **Recordar OK** les manda un email para que den su OK. Lo manda el servicio `api/recordar-ok.js` (Vercel Function, gratis) a través de **Brevo** (plan gratis: 300 mails por día).
+
+1. En Brevo: verificá la dirección que va a mandar (**Senders**) y creá una clave en **SMTP & API → API Keys**.
+2. En Vercel, **Settings → Environment Variables** (marcá *Production* y, para las claves, *Sensitive*):
+
+| Variable | Qué es |
+|---|---|
+| `BREVO_API_KEY` | la clave de Brevo |
+| `BREVO_SENDER_EMAIL` | el email verificado que manda los mails |
+| `BREVO_SENDER_NAME` | el nombre que ve quien recibe (ej.: Tablero Finora) |
+| `SUPABASE_SERVICE_ROLE_KEY` | la clave **secret** de Supabase (Project Settings → API Keys) |
+
+3. Volvé a publicar. Sin estas variables el tablero funciona igual: solo falla el envío, con un aviso claro.
+
+⚠️ La clave secret de Supabase da acceso total a la base: va **solo** en Vercel, nunca en el código ni en el chat. Para que nadie reciba spam, se puede recordar **una vez cada 6 horas por persona y tarea**.
+
 ## Cosas a saber
 
 - **Si nadie entra en 7 días, Supabase pausa el proyecto.**

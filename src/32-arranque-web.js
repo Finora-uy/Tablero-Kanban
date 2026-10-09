@@ -16,5 +16,6 @@ extensiones.plataforma = 'web';
   });
   web.cliente = cliente;
   extensiones.equipo = BloqueInvitaciones;
+  extensiones.recordarOk = recordarOkWeb;
   render(html`<${RaizWeb} cliente=${cliente} />`, raiz);
 })();

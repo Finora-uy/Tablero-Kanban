@@ -173,6 +173,29 @@ function conectarDatosWeb(cliente, user) {
   notificar();
 }
 
+/* ===== Recordatorio por email para dar el OK (lo manda el servicio api/recordar-ok) ===== */
+const MOTIVOS_RECORDATORIO = { reciente: 'ya se le avisó hace poco', 'ya-dio-ok': 'ya dio su OK', 'no-responsable': 'no es responsable', 'sos-vos': 'sos vos', 'sin-email': 'no tiene email cargado' };
+async function recordarOkWeb(tareaId, ids) {
+  const { data } = await web.cliente.auth.getSession();
+  const token = data && data.session && data.session.access_token;
+  if (!token) { avisar('Tu sesión venció. Recargá la página.', 'error'); return false; }
+  let r, j = {};
+  try {
+    r = await fetch('/api/recordar-ok', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ tareaId, destinatarios: ids }) });
+    j = await r.json().catch(() => ({}));
+  } catch (_) { avisar('No hay conexión con el servidor. Probá de nuevo.', 'error'); return false; }
+  const nombres = l => l.map(x => nombreMiembro(x.id || x)).join(', ');
+  const aparte = [...(j.omitidos || []), ...(j.fallidos || [])].map(x => `${nombreMiembro(x.id)} (${MOTIVOS_RECORDATORIO[x.motivo] || 'no se pudo'})`).join(', ');
+  if (r.ok && j.enviados && j.enviados.length) {
+    avisar(`Mandamos el recordatorio a ${nombres(j.enviados)}.${aparte ? ' No se avisó a: ' + aparte + '.' : ''}`);
+    return true;
+  }
+  if (r.status === 429) avisar(`${aparte || 'Ya se les avisó'}: se puede volver a recordar pasadas 6 horas.`, 'error');
+  else if (r.status === 404 && !j.error) avisar('El envío de recordatorios todavía no está disponible en esta versión.', 'error');
+  else avisar(j.error || (aparte ? `No se pudo avisar a: ${aparte}.` : 'No se pudo mandar el recordatorio. Probá de nuevo en un rato.'), 'error');
+  return false;
+}
+
 /* ===== Invitaciones (vista Equipo) ===== */
 function BloqueInvitaciones() {
   const cliente = web.cliente;
