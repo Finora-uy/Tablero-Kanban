@@ -86,6 +86,21 @@
 .chip-crono .mono { font-variant-numeric: tabular-nums; }
 @media (max-width: 760px) { .chip-crono .nombre { display: none; } }
 
+/* Quién está trabajando ahora (cabecera) */
+.trabajando-ahora { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.chip-trabajando {
+  display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px 0 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--green) 45%, var(--line)); background: color-mix(in srgb, var(--green) 10%, var(--surface));
+  color: var(--text); font-size: 13px; white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+}
+.chip-trabajando:hover { border-color: var(--green); }
+.chip-trabajando .punto-vivo { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex: none; animation: latir 1.6s ease-in-out infinite; }
+.chip-trabajando .avatar { flex: none; }
+.chip-trabajando strong { font-weight: 600; }
+.chip-trabajando.mas { cursor: default; padding: 0 10px; font-weight: 600; }
+@media (max-width: 1100px) { .chip-trabajando .largo { display: none; } }
+@media (max-width: 760px) { .trabajando-ahora .chip-trabajando:not(:first-child) { display: none; } .chip-trabajando .avatar { display: none; } }
+
 /* Reportes */
 .horas-filtros { padding: 0; }
 .paneles .panel.ancho { grid-column: 1 / -1; }

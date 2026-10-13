@@ -416,6 +416,26 @@ function ChipCronometro({ ctx, alIr }) {
     <span class="punto-vivo" aria-hidden="true"></span><span class="mono">${cronoTexto(Date.now() - new Date(c.inicio))}</span>${etapa ? html`<span class="nombre">${etapa.nombre}</span>` : null}
   </button>`;
 }
+// Compañeros con el cronómetro corriendo en una tarea del tablero (en vivo, sale de `cronometros`)
+function TrabajandoAhora({ ctx, alAbrir }) {
+  const lista = [...ctx.cronometros]
+    .filter(([id, c]) => id !== ctx.yo && c && c.tarea && ctx.porId.has(c.tarea) && ctx.integrantes.has(id))
+    .sort((a, b) => new Date(a[1].inicio) - new Date(b[1].inicio));
+  useReloj(lista.length > 0);
+  if (!lista.length) return null;
+  const visibles = lista.slice(0, 2), resto = lista.slice(2);
+  return html`<div class="trabajando-ahora" aria-live="polite">
+    ${visibles.map(([id, c]) => {
+      const t = ctx.porId.get(c.tarea), cod = codigo(t, ctx), nombre = nombreDe(id, ctx);
+      return html`<button key=${id} class="chip-trabajando" onClick=${() => alAbrir(t.id)}
+        title=${`${nombre} está trabajando en ${cod}: ${t.titulo} · hace ${cronoTexto(Date.now() - new Date(c.inicio))}`}>
+        <span class="punto-vivo" aria-hidden="true"></span><${Avatar} m=${ctx.integrantes.get(id)} t=${22} />
+        <span><strong>${nombre}</strong><span class="largo"> está trabajando en</span> <span class="mono">${cod}</span></span>
+      </button>`;
+    })}
+    ${resto.length > 0 && html`<span class="chip-trabajando mas" title=${resto.map(([id, c]) => `${nombreDe(id, ctx)} en ${codigo(ctx.porId.get(c.tarea), ctx)}`).join('\n')}>+${resto.length}</span>`}
+  </div>`;
+}
 function HorasDeTarea({ t, ctx, editable }) {
   const c = ctx.yo ? ctx.cronometros.get(ctx.yo) : null;
   const enEsta = !!(c && c.tarea === t.id);

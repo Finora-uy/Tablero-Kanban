@@ -1,6 +1,6 @@
 
 /* ===== Cabecera y barra de filtros ===== */
-function Cabecera({ ctx, e, vista, setVista, editable, alModal, alCambiarYo }) {
+function Cabecera({ ctx, e, vista, setVista, editable, alModal, alCambiarYo, alAbrir }) {
   const yoM = ctx.yo ? ctx.integrantes.get(ctx.yo) : null;
   const otros = ctx.enLinea;
   return html`<header class="cabecera">
@@ -12,6 +12,7 @@ function Cabecera({ ctx, e, vista, setVista, editable, alModal, alCambiarYo }) {
         <div><h1>Tablero del equipo</h1><div class="etiqueta-mono">Proyecto final · ORT Uruguay</div></div>
       </div>
       <div class="cab-acciones">
+        <${TrabajandoAhora} ctx=${ctx} alAbrir=${alAbrir} />
         <${ChipCronometro} ctx=${ctx} alIr=${() => setVista('horas')} />
         ${otros.length > 0 && html`<div class="en-linea" title=${otros.map(x => nombreDe(x.id, ctx) + (x.esYo ? ' (vos)' : '')).join(', ')}>
           <span class="punto-vivo" aria-hidden="true"></span><span class="texto">En línea</span>
@@ -219,7 +220,7 @@ function App() {
   }
 
   return html`<div class="app">
-    <${Cabecera} ctx=${ctx} e=${e} vista=${vista} setVista=${setVista} editable=${editable} alModal=${setModal} alCambiarYo=${cambiarYo} />
+    <${Cabecera} ctx=${ctx} e=${e} vista=${vista} setVista=${setVista} editable=${editable} alModal=${setModal} alCambiarYo=${cambiarYo} alAbrir=${setAbierta} />
     <div class="avisos-fijos">
       ${e.modo === 'local' && html`<div class="banner alerta"><${Icono} n="archivo" /><span><strong>Modo local.</strong> Los cambios se guardan solo en este navegador y no los ve nadie más. ${extensiones.plataforma === 'web' ? 'Conectá la base de datos (ver LEEME.md) para trabajar en equipo.' : 'Abrí el tablero desde Claude para trabajar en equipo.'}</span></div>`}
       ${e.modo === 'nube' && e.puedeEscribir === false && html`<div class="banner"><${Icono} n="ojo" /><span><strong>Solo lectura.</strong> Para editar, pedile a quien creó el tablero que te invite con permiso de edición.</span></div>`}
