@@ -70,13 +70,19 @@ function CronometroEnMarcha({ c, ctx }) {
 function CargaManual({ ctx }) {
   const [v, setV] = useState(() => { try { return JSON.parse(leer('finora-horas-ultimo') || '{}'); } catch (_) { return {}; } });
   const [f, setF] = useState({ descripcion: '', fecha: hoyISO(), desde: '', hasta: '' });
+  const [participantes, setParticipantes] = useState([]);
   const set = (k, x) => setF(s => ({ ...s, [k]: x }));
   const tiempos = armarInicioFin(f.fecha, f.desde, f.hasta);
+  const trabajo = v.trabajo && ctx.trabajosPorId.get(v.trabajo);
+  const esReunion = !!(trabajo && trabajo.grupo === 'Reuniones');
+  const otros = ctx.miembros.filter(m => m.id !== ctx.yo);
+  const alternar = id => setParticipantes(l => (l.includes(id) ? l.filter(x => x !== id) : [...l, id]));
   const agregar = async () => {
     if (!tiempos) { avisar('Completá la fecha y los horarios de inicio y fin.', 'error'); return; }
     guardar('finora-horas-ultimo', JSON.stringify({ etapa: v.etapa || null, trabajo: v.trabajo || null }));
-    const ok = await accionesHoras.crear({ miembro: ctx.yo, inicio: tiempos.inicio, fin: tiempos.fin, etapa: v.etapa, trabajo: v.trabajo, tarea: v.tarea, descripcion: f.descripcion });
-    if (ok) setF(s => ({ ...s, descripcion: '', desde: s.hasta, hasta: '' }));
+    const r = { miembro: ctx.yo, inicio: tiempos.inicio, fin: tiempos.fin, etapa: v.etapa, trabajo: v.trabajo, tarea: v.tarea, descripcion: f.descripcion };
+    const ok = esReunion && participantes.length ? await accionesHoras.crearReunion(r, participantes) : await accionesHoras.crear(r);
+    if (ok) { setF(s => ({ ...s, descripcion: '', desde: s.hasta, hasta: '' })); setParticipantes([]); }
   };
   return html`<div class="crono-campos manual">
     <input class="entrada crono-desc" id="man-desc" type="text" placeholder="¿En qué trabajaste?" value=${f.descripcion} onInput=${e => set('descripcion', e.target.value)} />
@@ -90,6 +96,12 @@ function CargaManual({ ctx }) {
     <span class="crono-tiempo mono" title=${tiempos && tiempos.cruza ? 'Termina al día siguiente' : ''}>${tiempos ? duracionReloj(tiempos.minutos) + (tiempos.cruza ? ' +1' : '') : '0:00'}</span>
     <button class="btn btn-primario crono-boton" onClick=${agregar} disabled=${!tiempos}><${Icono} n="mas" t=${15} />Agregar</button>
     ${errorHorario(f) && html`<p class="error-horario" role="alert">${errorHorario(f)}</p>`}
+    ${esReunion && otros.length > 0 && html`<div class="participantes" role="group" aria-label="Quiénes más estuvieron en la reunión">
+      <span class="tenue">¿Quiénes más estuvieron?</span>
+      <div class="selector-chips">${otros.map(m => html`<button key=${m.id} type="button" class="chip-btn" aria-pressed=${participantes.includes(m.id)} onClick=${() => alternar(m.id)}><${Avatar} m=${m} t=${20} />${m.nombre}</button>`)}
+        ${otros.length > 1 && html`<button type="button" class="btn-link" onClick=${() => setParticipantes(participantes.length === otros.length ? [] : otros.map(m => m.id))}>${participantes.length === otros.length ? 'Ninguno' : 'Todos'}</button>`}</div>
+      ${participantes.length > 0 && html`<span class="tenue">Se carga la misma reunión a ${participantes.length + 1} personas.</span>`}
+    </div>`}
   </div>`;
 }
 
@@ -100,12 +112,13 @@ function FilaRegistro({ r, ctx, editable, alAbrir, alEditar }) {
   const etapa = r.etapa && ctx.etapasPorId.get(r.etapa);
   const trabajo = r.trabajo && ctx.trabajosPorId.get(r.trabajo);
   const tarea = r.tarea && ctx.porId.get(r.tarea);
-  const propio = editable && r.miembro === ctx.yo;
+  const cargoPorOtro = r.creadoPor && r.creadoPor !== r.miembro;
+  const propio = editable && (r.miembro === ctx.yo || (cargoPorOtro && r.creadoPor === ctx.yo));
   const otroDia = isoDe(new Date(r.fin)) !== r.fecha;
   return html`<li class="registro">
     <${Avatar} m=${m} t=${26} />
     <div class="reg-cuerpo">
-      <p class="reg-desc">${r.descripcion || html`<span class="tenue">Sin descripción</span>`}</p>
+      <p class="reg-desc">${r.descripcion || html`<span class="tenue">Sin descripción</span>`}${cargoPorOtro && html`<span class="tenue reg-cargo"> · cargó ${nombreDe(r.creadoPor, ctx)}</span>`}</p>
       ${(etapa || trabajo || tarea) && html`<div class="reg-chips">
         ${etapa && html`<${Etiqueta} x=${etapa} />`}
         ${trabajo && html`<span class="chip-trabajo">${trabajo.nombre}</span>`}

@@ -38,6 +38,8 @@
 .crono-modo button[aria-pressed="true"] { background: var(--card-2); color: var(--text); }
 .man-horas { gap: 6px; flex-wrap: nowrap; }
 .error-horario { flex-basis: 100%; color: var(--red-text); font-size: 13px; }
+.crono-campos .participantes { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 4px; font-size: 13px; }
+.reg-cargo { font-size: 12.5px; }
 .man-horas .entrada { width: 108px; }
 @media (max-width: 760px) {
   .crono-campos select.entrada { max-width: none; flex: 1 1 140px; }

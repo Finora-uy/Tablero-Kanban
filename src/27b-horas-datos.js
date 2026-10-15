@@ -135,6 +135,21 @@ const accionesHoras = {
     }
     return ok;
   },
+  // Una reunión cargada a mano: un registro igual para vos y para cada participante
+  async crearReunion(r, participantes) {
+    const error = validarRegistro(r);
+    if (error) { avisar(error, 'error'); return false; }
+    const ahora = ahoraISO(), base = armarRegistro(r);
+    const ids = [r.miembro, ...participantes.filter(x => x !== r.miembro && estado.integrantes.has(x))];
+    let n = 0;
+    for (const miembro of ids) {
+      const ok = await conManejo(backend.crear('horas/' + backend.nuevoId('horas'), { ...base, miembro, creadoPor: yo(), creadoEn: ahora, actualizadoEn: ahora }));
+      if (ok) n++;
+    }
+    if (n === ids.length) avisar(ids.length > 1 ? `Guardaste ${duracionTexto(base.minutos)} para vos y ${ids.length - 1 === 1 ? nombreMiembro(ids[1]) : (ids.length - 1) + ' personas más'}.` : `Guardaste ${duracionTexto(base.minutos)}.`);
+    else if (n > 0) avisar(`Se guardaron ${n} de ${ids.length} registros. Revisá la lista y cargá los que falten.`, 'error');
+    return n > 0;
+  },
   async editar(id, r) {
     const error = validarRegistro(r);
     if (error) { avisar(error, 'error'); return false; }
