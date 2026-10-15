@@ -131,6 +131,7 @@ const CONFIG_BASE = {
     { id: 'pruebas', nombre: 'Pruebas', color: 'mostaza' },
     { id: 'documentacion', nombre: 'Documentación', color: 'petroleo' },
     { id: 'presentacion', nombre: 'Presentación', color: 'naranja' },
+    { id: 'reunion', nombre: 'Reunión', color: 'pizarra', fijo: true },
   ],
   trabajos: [
     { id: 'programacion', nombre: 'Programación', color: 'verde' },
@@ -143,6 +144,7 @@ const CONFIG_BASE = {
       { id: 'reunion-interna', nombre: 'Reunión interna', color: 'azul' },
       { id: 'reunion-cliente', nombre: 'Reunión con cliente', color: 'naranja' },
       { id: 'reunion-tutor', nombre: 'Reunión con tutor', color: 'magenta' },
+      { id: 'reunion-experto', nombre: 'Reunión con experto del dominio', color: 'violeta' },
     ].map(x => ({ ...x, grupo: 'Reuniones', fijo: true })),
   ],
 };
@@ -157,6 +159,13 @@ function armarTrabajos(guardados, horasMap) {
     if (r.trabajo === 'reunion') { lista.push({ id: 'reunion', nombre: 'Reunión (sin especificar)', color: 'pizarra', grupo: 'Reuniones', legado: true }); break; }
   }
   return lista;
+}
+// La etapa "Reunión" está siempre (se puede renombrar, no borrar), aunque la config guardada sea anterior
+const ETAPAS_FIJAS = CONFIG_BASE.etapas.filter(x => x.fijo);
+function armarEtapas(guardados) {
+  if (!guardados) return CONFIG_BASE.etapas;
+  const base = guardados.filter(x => !ETAPAS_FIJAS.some(f => f.id === x.id));
+  return [...base, ...ETAPAS_FIJAS.map(f => ({ ...f, ...(guardados.find(x => x.id === f.id) || {}), fijo: true }))];
 }
 const SESION = uid();
 const ID_VALIDO = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
@@ -344,7 +353,7 @@ function armarContexto(e) {
   }
   enLinea.sort((a, b) => (b.esYo ? 1 : 0) - (a.esYo ? 1 : 0));
   // Horas: si la config guardada es anterior a esta sección, se usan las listas por defecto
-  const etapas = config.etapas || CONFIG_BASE.etapas;
+  const etapas = armarEtapas(config.etapas);
   const trabajos = armarTrabajos(config.trabajos, e.horas);
   const horas = [...e.horas].map(([id, r]) => ({ ...r, id })).filter(r => r.inicio && r.fin && r.miembro);
   const horasPorTarea = new Map();

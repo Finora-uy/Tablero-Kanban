@@ -10,7 +10,7 @@ function SelectoresRegistro({ ctx, valor, alCambiar, idBase }) {
     <select class="entrada" id=${idBase + '-etapa'} aria-label="Etapa" value=${valor.etapa || ''} onChange=${e => alCambiar({ etapa: e.target.value || null })}>
       <option value="">Sin etapa</option>${ctx.etapas.map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}
     </select>
-    <select class="entrada" id=${idBase + '-trabajo'} aria-label="Trabajo" value=${valor.trabajo || ''} onChange=${e => alCambiar({ trabajo: e.target.value || null })}>
+    <select class="entrada" id=${idBase + '-trabajo'} aria-label="Trabajo" value=${valor.trabajo || ''} onChange=${e => { const tr = e.target.value || null, g = tr && ctx.trabajosPorId.get(tr); alCambiar(g && g.grupo === 'Reuniones' && !valor.etapa && ctx.etapasPorId.has('reunion') ? { trabajo: tr, etapa: 'reunion' } : { trabajo: tr }); }}>
       <option value="">Sin trabajo</option>
       ${ctx.trabajos.filter(x => !x.grupo && !x.legado).map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}
       ${[...new Set(ctx.trabajos.filter(x => x.grupo).map(x => x.grupo))].map(g => html`<optgroup key=${g} label=${g}>

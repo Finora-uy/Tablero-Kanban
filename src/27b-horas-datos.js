@@ -73,20 +73,31 @@ function superposiciones(r, excepto) {
   return n;
 }
 
+// Si arranca el cronómetro en una tarea que todavía no empezó (Ideas o Por hacer), la tarea pasa a En curso
+function pasarAEnCurso(tareaId) {
+  const t = tareaId && estado.tareas.get(tareaId), enCurso = columnaEnCurso();
+  if (!t || t.archivada || !enCurso || indiceColumna(t.columna) < 0 || indiceColumna(t.columna) >= indiceColumna(enCurso.id)) return;
+  const l = tareasDeColumna(enCurso.id, tareaId);
+  acciones.moverTarea(tareaId, enCurso.id, l.length ? l[l.length - 1].orden + 1024 : 1024, { __que: `empezó a trabajarla: pasó a ${enCurso.nombre}` })
+    .then(ok => { if (ok) avisar(`${(estado.config || CONFIG_BASE).prefijo}-${t.numero} pasó a ${enCurso.nombre}.`); });
+}
+
 const accionesHoras = {
   async iniciar(datos = {}) {
     const yoId = yo();
     if (!yoId) { avisar('Sumate al tablero (menú de tu perfil) para cargar horas.', 'error'); return false; }
     if (estado.cronometros.has(yoId)) await accionesHoras.detener();
-    return conManejo(backend.crear('cronometros/' + yoId, {
+    const ok = await conManejo(backend.crear('cronometros/' + yoId, {
       inicio: ahoraISO(), descripcion: (datos.descripcion || '').trim(), etapa: datos.etapa || null,
       trabajo: datos.trabajo || null, tarea: datos.tarea || null, userId: estado.userId || null,
     }));
+    if (ok) pasarAEnCurso(datos.tarea);
+    return ok;
   },
   editarCronometro(cambios) {
     const yoId = yo();
     if (!yoId || !estado.cronometros.has(yoId)) return Promise.resolve(false);
-    return conManejo(backend.actualizar('cronometros/' + yoId, cambios));
+    return conManejo(backend.actualizar('cronometros/' + yoId, cambios)).then(ok => { if (ok && cambios.tarea) pasarAEnCurso(cambios.tarea); return ok; });
   },
   async detener() {
     const yoId = yo();

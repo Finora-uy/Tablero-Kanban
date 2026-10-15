@@ -26,6 +26,13 @@ const esRevision = colId => {
   const i = cfg.columnas.findIndex(c => c.final), fin = i >= 0 ? i : cfg.columnas.length - 1;
   return fin > 0 && cfg.columnas[fin - 1].id === colId;
 };
+// La columna "En curso" es la que está justo antes de la de revisión
+const columnaEnCurso = () => {
+  const cfg = estado.config || CONFIG_BASE;
+  const i = cfg.columnas.findIndex(c => c.final), fin = i >= 0 ? i : cfg.columnas.length - 1;
+  return fin > 1 ? cfg.columnas[fin - 2] : null;
+};
+const indiceColumna = colId => (estado.config || CONFIG_BASE).columnas.findIndex(c => c.id === colId);
 // Responsables que todavía no dieron el OK (solo cuenta si hay 2 o más)
 const faltanOk = t => {
   const asig = (t.asignados || []).filter(id => estado.integrantes.has(id));
@@ -93,7 +100,13 @@ const acciones = {
       if (!esFinal(colId) && (t.aprobaciones || []).length) cambios.aprobaciones = [];
       const ahora = ahoraISO();
       cambios.columna = colId; cambios.entroEnColumna = ahora; cambios.terminadaEn = esFinal(colId) ? ahora : null;
-      que = `la movió a ${nombreColumna(colId)}`;
+      que = extra.__que || `la movió a ${nombreColumna(colId)}`;
+      // Quien la pasa a revisión desde antes (En curso) ya deja su OK, si es responsable
+      const yoId = yo();
+      if (esRevision(colId) && indiceColumna(t.columna) < indiceColumna(colId) && yoId && (t.asignados || []).includes(yoId)) {
+        cambios.aprobaciones = [yoId];
+        que += ' y dio su OK';
+      }
       const cfg = estado.config || CONFIG_BASE;
       const col = cfg.columnas.find(c => c.id === colId);
       const n = tareasDeColumna(colId, id).length + 1;
