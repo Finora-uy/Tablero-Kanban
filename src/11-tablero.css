@@ -141,6 +141,80 @@ kbd {
 .alta-rapida { display: grid; gap: 8px; margin: 0 8px 8px; }
 .alta-rapida textarea { min-height: 60px; }
 
+/* Fila: tablero + panel de atención */
+.tablero-fila { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.tablero-fila > .tablero { min-width: 0; }
+
+/* Notas (post-its) */
+.col-notas { background: color-mix(in srgb, var(--c-mostaza) 7%, var(--col)); }
+.col-notas .col-lista { gap: 10px; padding-top: 4px; }
+.postit {
+  --pi: var(--c-mostaza);
+  position: relative; display: grid; gap: 8px; padding: 12px 12px 10px; border-radius: 4px 4px 14px 4px;
+  background: color-mix(in srgb, var(--pi) 30%, var(--card)); border: 1px solid color-mix(in srgb, var(--pi) 50%, transparent);
+  box-shadow: var(--shadow-sm); color: var(--text);
+}
+.postit.c-verde { --pi: var(--c-verde); }
+.postit.c-azul { --pi: var(--c-azul); }
+.postit.c-rosa { --pi: var(--c-magenta); }
+.postit-texto { font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.postit-pie { display: flex; align-items: center; gap: 8px; }
+.postit-pie .btn-icono { margin-left: auto; }
+.postit-quien { display: grid; line-height: 1.25; font-size: 12.5px; min-width: 0; }
+.postit-quien strong { font-weight: 600; }
+.postit-cuando { color: var(--text-2); font-size: 11.5px; }
+.postit-vence { display: inline-flex; align-items: center; gap: 4px; font: 500 11px/1 var(--f-mono); color: var(--text-2); }
+.postit.nueva textarea { min-height: 84px; background: color-mix(in srgb, var(--card) 70%, transparent); }
+.postit-colores { display: flex; align-items: center; gap: 6px; }
+.postit-colores .mono { margin-left: auto; font-size: 11px; }
+.postit-color {
+  --pi: var(--c-mostaza); width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  background: color-mix(in srgb, var(--pi) 45%, var(--card)); border: 2px solid transparent;
+}
+.postit-color.c-verde { --pi: var(--c-verde); }
+.postit-color.c-azul { --pi: var(--c-azul); }
+.postit-color.c-rosa { --pi: var(--c-magenta); }
+.postit-color[aria-pressed="true"] { border-color: var(--text); }
+
+/* Requiere tu atención */
+.atencion {
+  flex: 0 0 300px; display: flex; flex-direction: column; min-height: 0; margin-block: 12px 16px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+}
+.atencion.cerrada { flex-basis: auto; background: none; border: 0; }
+.atencion-abrir {
+  position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--card); color: var(--text);
+}
+.atencion-abrir .atencion-cuenta { position: absolute; top: -6px; right: -6px; }
+.atencion-cab { display: flex; align-items: center; gap: 8px; padding: 12px 10px 10px 14px; border-bottom: 1px solid var(--line); }
+.atencion-cab h2 { font-size: 14px; font-weight: 600; }
+.atencion-cab .btn-icono { margin-left: auto; }
+.atencion-cuenta {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: inline-grid; place-items: center;
+  background: var(--red); color: #fff; font: 600 11.5px/1 var(--f-mono);
+}
+.atencion-cuerpo { overflow-y: auto; padding: 8px 8px 12px; display: grid; gap: 14px; align-content: start; }
+.atencion-cuerpo h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-2); padding: 4px 6px; }
+.atencion-cuerpo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.atencion-item {
+  width: 100%; display: grid; gap: 2px; text-align: left; padding: 8px 8px; border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent; background: none; color: var(--text); font: inherit;
+}
+.atencion-item:hover { background: var(--card-2); border-color: var(--line); }
+.atencion-item .mono { font-size: 11.5px; }
+.atencion-titulo { font-size: 13.5px; font-weight: 500; line-height: 1.35; }
+.atencion-detalle { font-size: 12px; color: var(--text-2); }
+.atencion-detalle.pronto { color: var(--amber-text); }
+.atencion-detalle.vencida { color: var(--red-text); }
+.atencion-vacio { display: flex; gap: 8px; align-items: start; padding: 8px 6px; color: var(--text-2); font-size: 13px; }
+.atencion-vacio .ic { color: var(--green-text); flex: none; }
+@media (max-width: 900px) {
+  .tablero-fila { flex-direction: column; gap: 0; }
+  .atencion { order: -1; flex: none; max-height: 38vh; margin-block: 10px 0; }
+  .atencion.cerrada { align-self: flex-end; }
+}
+
 .tablero.con-carriles { display: block; }
 .grilla-carriles { display: grid; gap: 0 12px; width: max-content; }
 .grilla-carriles .col-cab {

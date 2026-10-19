@@ -257,7 +257,7 @@ async function importarRespaldo(ops, alProgresar) {
 }
 
 /* ===== Arranque: suscripciones y capacidades ===== */
-const COLECCIONES = ['config', 'integrantes', 'tareas', 'comentarios', 'hitos', 'horas', 'cronometros', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos'];
+const COLECCIONES = ['config', 'notas', 'integrantes', 'tareas', 'comentarios', 'hitos', 'horas', 'cronometros', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos'];
 const subs = {};
 function abrirSuscripcion(nombre) {
   if (subs[nombre]) { try { subs[nombre](); } catch (_) {} }

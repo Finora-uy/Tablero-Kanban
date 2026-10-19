@@ -187,7 +187,11 @@ function App() {
     cuerpo = html`<div class="tablero-envoltura">
       ${sinTareas && !filtros.archivadas && html`<div class="aviso-vacio"><${Isotipo} t=${26} /><p><strong>Todavía no hay tareas.</strong> ${editable ? 'Creá la primera con N o con el botón Nueva tarea, o escribila directo en una columna.' : 'Cuando el equipo cargue tareas, van a aparecer acá.'}</p></div>`}
       ${!sinTareas && hayFiltros && !tareasFiltradas.length && html`<div class="aviso-vacio"><p>Ninguna tarea coincide con los filtros.</p><button class="btn btn-chico" onClick=${limpiarFiltros}>Limpiar filtros</button></div>`}
-      <${Tablero} ctx=${ctx} tareas=${tareasFiltradas} carril=${carril} editable=${editable && !filtros.archivadas} alAbrir=${setAbierta} alNueva=${alNueva} />
+      <div class="tablero-fila">
+        <${Tablero} ctx=${ctx} tareas=${tareasFiltradas} carril=${carril} editable=${editable && !filtros.archivadas} alAbrir=${setAbierta} alNueva=${alNueva}
+          antes=${!filtros.archivadas && html`<${PanelNotas} ctx=${ctx} editable=${editable} />`} />
+        <${PanelAtencion} ctx=${ctx} alAbrir=${setAbierta} />
+      </div>
     </div>`;
   } else if (vista === 'lista') {
     cuerpo = html`<${VistaLista} ctx=${ctx} tareas=${tareasFiltradas} alAbrir=${setAbierta} hayFiltros=${hayFiltros} alLimpiar=${limpiarFiltros} />`;

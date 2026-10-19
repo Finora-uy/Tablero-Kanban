@@ -70,7 +70,7 @@ function listaCarriles(carril, ctx) {
 }
 
 /* ===== Tablero con arrastrar y soltar ===== */
-function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva }) {
+function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva, antes }) {
   const contRef = useRef(null);
   const sRef = useRef(null);
   const enfocarRef = useRef(null);
@@ -321,6 +321,7 @@ function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva }) {
 
   if (carril === 'ninguno') {
     return html`<div class="tablero" ref=${contRef}>
+      ${antes}
       ${ctx.columnas.map(col => html`<section class="columna" key=${col.id} aria-label=${col.nombre}>
         ${cabeceraColumna(col, true)}
         <div class="col-lista" data-lista data-col=${col.id} data-carril="todos">${renderLista(col, 'todos')}</div>

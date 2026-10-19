@@ -176,8 +176,8 @@ const estado = {
   config: null,
   integrantes: new Map(), tareas: new Map(), comentarios: new Map(), hitos: new Map(),
   horas: new Map(), cronometros: new Map(), disponibilidad: new Map(), ausencias: new Map(), fechas: new Map(),
-  roadmap: new Map(), roadmapFases: new Map(), roadmapItems: new Map(), roadmapPeriodos: new Map(),
-  cargado: { config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false, roadmap: false, roadmapFases: false, roadmapItems: false, roadmapPeriodos: false },
+  roadmap: new Map(), roadmapFases: new Map(), roadmapItems: new Map(), roadmapPeriodos: new Map(), notas: new Map(),
+  cargado: { notas: false, config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false, roadmap: false, roadmapFases: false, roadmapItems: false, roadmapPeriodos: false },
   puedeEscribir: null, userId: null, yoId: leer('finora-yo'),
   pares: [], room: null, descargas: null,
   errorConexion: false, avisos: [],
@@ -329,10 +329,11 @@ function miembroDePar(p, e) {
 /* ===== Contexto derivado para renderizar ===== */
 function armarContexto(e) {
   const config = e.config || CONFIG_BASE;
-  const columnas = config.columnas;
-  const finalCol = columnas.find(c => c.final) || columnas[columnas.length - 1];
   const tareas = [];
   for (const [id, t] of e.tareas) tareas.push({ ...t, id });
+  // La columna "Ideas" se reemplazó por el panel de Notas: se oculta salvo que todavía tenga tareas
+  const columnas = config.columnas.filter(c => c.id !== 'ideas' || tareas.some(t => t.columna === 'ideas'));
+  const finalCol = columnas.find(c => c.final) || columnas[columnas.length - 1];
   const porId = new Map(tareas.map(t => [t.id, t]));
   const miembros = [...e.integrantes].map(([id, m]) => ({ ...m, id })).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
   const integrantes = new Map(miembros.map(m => [m.id, m]));
@@ -360,6 +361,7 @@ function armarContexto(e) {
   for (const r of horas) if (r.tarea) horasPorTarea.set(r.tarea, (horasPorTarea.get(r.tarea) || 0) + (r.minutos || 0));
   return {
     etapas, etapasPorId: new Map(etapas.map(x => [x.id, x])), trabajos, trabajosPorId: new Map(trabajos.map(x => [x.id, x])),
+    notas: [...e.notas].map(([id, n]) => ({ ...n, id })).sort((a, b) => (b.creadaEn || '').localeCompare(a.creadaEn || '')),
     horas, horasPorTarea, cronometros: e.cronometros, disponibilidad: e.disponibilidad, ausencias: e.ausencias,
     roadmap: {
       meta: e.roadmap.get('meta') || null,
