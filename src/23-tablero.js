@@ -70,7 +70,7 @@ function listaCarriles(carril, ctx) {
 }
 
 /* ===== Tablero con arrastrar y soltar ===== */
-function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva, antes }) {
+function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva, antes, ocultas = 0, alVerLista }) {
   const contRef = useRef(null);
   const sRef = useRef(null);
   const enfocarRef = useRef(null);
@@ -90,7 +90,7 @@ function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva, antes }) {
   datosRef.current = { ctx, carril, grupos };
 
   const totales = new Map();
-  for (const t of ctx.tareas) if (!t.archivada) totales.set(t.columna, (totales.get(t.columna) || 0) + 1);
+  for (const t of ctx.tareas) if (!t.archivada && !hechaVieja(t, ctx)) totales.set(t.columna, (totales.get(t.columna) || 0) + 1);
 
   useEffect(() => {
     const id = enfocarRef.current;
@@ -303,7 +303,9 @@ function Tablero({ ctx, tareas, carril, editable, alAbrir, alNueva, antes }) {
     }
     if (destinoAqui && arr.destino.indice >= vi) items.push(hueco);
     const visibles = lista.filter(t => !arr || t.id !== arr.id).length;
-    if (!visibles && !destinoAqui && carril === 'ninguno') items.push(html`<p key="__vacia" class="col-vacia">${editable ? 'Arrastrá tareas acá' : 'Sin tareas'}</p>`);
+    if (!visibles && !destinoAqui && carril === 'ninguno') items.push(html`<p key="__vacia" class="col-vacia">${col.final && ocultas ? `Nada terminado en los últimos ${HECHAS_DIAS_VISIBLES} días` : editable ? 'Arrastrá tareas acá' : 'Sin tareas'}</p>`);
+    if (col.final && ocultas > 0 && carril === 'ninguno') items.push(html`<button key="__ocultas" class="hechas-ocultas" onClick=${alVerLista} title="Abrir la vista Lista, que muestra todas las tareas del proyecto">
+      Se ven las terminadas en los últimos ${HECHAS_DIAS_VISIBLES} días. <strong>${ocultas} más en Lista</strong> →</button>`);
     return items;
   }
   function cabeceraColumna(col, conAlta) {

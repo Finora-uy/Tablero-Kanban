@@ -379,6 +379,13 @@ function armarContexto(e) {
 const codigo = (t, ctx) => `${ctx.prefijo}-${t.numero != null ? t.numero : '?'}`;
 const estadoVence = (vence, hoy) => { const n = diasEntre(hoy, vence); return n < 0 ? 'vencida' : n <= 2 ? 'pronto' : 'normal'; };
 const esHecha = (t, ctx) => t.columna === ctx.finalId;
+// En el tablero, la columna final solo muestra lo terminado en los últimos 5 días; el resto está en la Lista
+const HECHAS_DIAS_VISIBLES = 5;
+const hechaVieja = (t, ctx, ahora = Date.now()) => {
+  if (!esHecha(t, ctx)) return false;
+  const cuando = Date.parse(t.terminadaEn || t.entroEnColumna || t.actualizadaEn || '');
+  return !(cuando > ahora - HECHAS_DIAS_VISIBLES * 864e5);
+};
 const dependenciasPendientes = (t, ctx) => (t.dependeDe || []).map(id => ctx.porId.get(id)).filter(d => d && !d.archivada && !esHecha(d, ctx));
 const estaBloqueada = (t, ctx) => !!t.bloqueada || dependenciasPendientes(t, ctx).length > 0;
 const estaVencida = (t, ctx) => !!t.vence && !esHecha(t, ctx) && !t.archivada && diasEntre(ctx.hoy, t.vence) < 0;

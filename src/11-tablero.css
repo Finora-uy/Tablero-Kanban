@@ -138,6 +138,12 @@ kbd {
   border: 0; background: none; color: var(--text-2); cursor: pointer; font-weight: 500;
 }
 .col-agregar:hover { background: var(--card); color: var(--text); }
+.hechas-ocultas {
+  margin-top: 2px; padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--line-2); background: none; cursor: pointer;
+  color: var(--text-2); font: inherit; font-size: 12.5px; line-height: 1.4; text-align: left;
+}
+.hechas-ocultas:hover { border-color: var(--focus); color: var(--text); }
+.hechas-ocultas strong { color: var(--text); font-weight: 600; }
 .alta-rapida { display: grid; gap: 8px; margin: 0 8px 8px; }
 .alta-rapida textarea { min-height: 60px; }
 

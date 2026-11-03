@@ -179,6 +179,9 @@ function App() {
   const hayFiltros = cuantosFiltros(filtros) > 0 || !!filtros.q;
   const limpiarFiltros = () => setFiltros({ ...FILTROS_VACIOS });
   const sinTareas = !ctx.tareas.some(t => !t.archivada);
+  // Tablero: lo terminado hace más de 5 días sigue en la Lista
+  const hechasViejas = vista === 'tablero' && !filtros.archivadas ? new Set(tareasFiltradas.filter(t => hechaVieja(t, ctx)).map(t => t.id)) : new Set();
+  const tareasTablero = hechasViejas.size ? tareasFiltradas.filter(t => !hechasViejas.has(t.id)) : tareasFiltradas;
 
   let cuerpo;
   if (!listo) {
@@ -188,7 +191,7 @@ function App() {
       ${sinTareas && !filtros.archivadas && html`<div class="aviso-vacio"><${Isotipo} t=${26} /><p><strong>Todavía no hay tareas.</strong> ${editable ? 'Creá la primera con N o con el botón Nueva tarea, o escribila directo en una columna.' : 'Cuando el equipo cargue tareas, van a aparecer acá.'}</p></div>`}
       ${!sinTareas && hayFiltros && !tareasFiltradas.length && html`<div class="aviso-vacio"><p>Ninguna tarea coincide con los filtros.</p><button class="btn btn-chico" onClick=${limpiarFiltros}>Limpiar filtros</button></div>`}
       <div class="tablero-fila">
-        <${Tablero} ctx=${ctx} tareas=${tareasFiltradas} carril=${carril} editable=${editable && !filtros.archivadas} alAbrir=${setAbierta} alNueva=${alNueva}
+        <${Tablero} ctx=${ctx} tareas=${tareasTablero} ocultas=${hechasViejas.size} alVerLista=${() => setVista('lista')} carril=${carril} editable=${editable && !filtros.archivadas} alAbrir=${setAbierta} alNueva=${alNueva}
           antes=${!filtros.archivadas && html`<${PanelNotas} ctx=${ctx} editable=${editable} />`} />
         <${PanelAtencion} ctx=${ctx} alAbrir=${setAbierta} />
       </div>
