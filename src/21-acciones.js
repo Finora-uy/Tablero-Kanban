@@ -60,7 +60,7 @@ const acciones = {
     for (const t of estado.tareas.values()) if (t.numero > maxNum) maxNum = t.numero;
     let numero = maxNum + 1;
     try { numero = await backend.siguienteNumero(maxNum); } catch (_) {}
-    const columna = c.columna && cfg.columnas.some(x => x.id === c.columna) ? c.columna : (cfg.columnas[1] || cfg.columnas[0]).id;
+    const columna = c.columna && cfg.columnas.some(x => x.id === c.columna) ? c.columna : (cfg.columnas.find(x => x.id !== 'ideas') || cfg.columnas[0]).id;
     const enCursoCol = columnaEnCurso();
     if (enCursoCol && columna === enCursoCol.id && !tieneEstimacion(c)) {
       avisar(`Para crear una tarea directo en ${enCursoCol.nombre} tiene que tener estimación en puntos. Elegí la estimación o creala en otra columna.`, 'error');
@@ -72,7 +72,7 @@ const acciones = {
     const t = {
       numero, titulo: c.titulo.trim(), descripcion: c.descripcion || '', tipo: c.tipo || 'tarea', columna, orden,
       asignados: c.asignados || [], etiquetas: c.etiquetas || [], prioridad: c.prioridad || 'media',
-      vence: c.vence || null, estimacion: c.estimacion != null && c.estimacion !== '' ? Number(c.estimacion) : null, hito: c.hito || null,
+      vence: c.vence || null, faseRoadmap: c.faseRoadmap || null, estimacion: c.estimacion != null && c.estimacion !== '' ? Number(c.estimacion) : null, hito: c.hito || null,
       subtareas: c.subtareas || [], criterios: c.criterios || [], enlaces: c.enlaces || [], dependeDe: [],
       bloqueada: false, motivoBloqueo: '', creadaPor: yo(), creadaEn: ahora, actualizadaEn: ahora, entroEnColumna: ahora,
       terminadaEn: esFinal(columna) ? ahora : null, archivada: false,
@@ -223,13 +223,13 @@ function respaldoJSON() {
 }
 function tareasCSV(ctx) {
   const esc = v => { const s = v == null ? '' : String(v); return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const filas = [['Código', 'Título', 'Estado', 'Tipo', 'Prioridad', 'Responsables', 'Etiquetas', 'Vence', 'Puntos', 'Hito', 'Bloqueada', 'Archivada', 'Creada', 'Terminada', 'Descripción']];
+  const filas = [['Código', 'Título', 'Estado', 'Tipo', 'Prioridad', 'Responsables', 'Etiquetas', 'Vence', 'Puntos', 'Hito', 'Fase del roadmap', 'Bloqueada', 'Archivada', 'Creada', 'Terminada', 'Descripción']];
   const lista = [...ctx.tareas].sort((a, b) => (a.numero || 0) - (b.numero || 0));
   for (const t of lista) {
     filas.push([
       codigo(t, ctx), t.titulo, ctx.colPorId.get(t.columna)?.nombre || '', TIPO[t.tipo]?.nombre || '', PRIORIDAD[t.prioridad]?.nombre || '',
       (t.asignados || []).map(id => nombreDe(id, ctx)).join(', '), (t.etiquetas || []).map(id => ctx.etiquetasPorId.get(id)?.nombre).filter(Boolean).join(', '),
-      t.vence ? fechaNum(t.vence) : '', t.estimacion ?? '', t.hito ? ctx.hitosPorId.get(t.hito)?.nombre || '' : '',
+      t.vence ? fechaNum(t.vence) : '', t.estimacion ?? '', t.hito ? ctx.hitosPorId.get(t.hito)?.nombre || '' : '', t.faseRoadmap ? ctx.fasesRoadmapPorId.get(t.faseRoadmap)?.nombre || '' : '',
       estaBloqueada(t, ctx) ? 'Sí' : 'No', t.archivada ? 'Sí' : 'No', t.creadaEn ? fechaNum(isoDe(new Date(t.creadaEn))) : '',
       t.terminadaEn ? fechaNum(isoDe(new Date(t.terminadaEn))) : '', t.descripcion || '',
     ]);

@@ -2,8 +2,8 @@
 /* ===== Nueva tarea ===== */
 function ModalNueva({ ctx, inicial = {}, alCerrar, alAbrir }) {
   const [f, setF] = useState({
-    titulo: '', tipo: 'tarea', columna: inicial.columna || (ctx.columnas[1] || ctx.columnas[0]).id, prioridad: 'media',
-    asignados: [], etiquetas: [], vence: '', hito: '', estimacion: '',
+    titulo: '', tipo: 'tarea', columna: inicial.columna || (ctx.columnas.find(c => c.id !== 'ideas') || ctx.columnas[0]).id, prioridad: 'media',
+    asignados: [], etiquetas: [], vence: '', hito: '', faseRoadmap: '', estimacion: '',
   });
   const [enviando, setEnviando] = useState(false);
   const set = (k, v) => setF(x => ({ ...x, [k]: v }));
@@ -30,6 +30,7 @@ function ModalNueva({ ctx, inicial = {}, alCerrar, alAbrir }) {
       <div class="campo"><label for="nt-vence">Vence</label><input class="entrada" id="nt-vence" type="date" value=${f.vence} onChange=${e => set('vence', e.target.value)} /></div>
       <div class="campo"><label for="nt-est">Estimación</label><select class="entrada" id="nt-est" value=${f.estimacion} onChange=${e => set('estimacion', e.target.value)}><option value="">Sin estimar</option>${ESTIMACIONES.map(n => html`<option value=${String(n)}>${n} ${n === 1 ? 'punto' : 'puntos'}</option>`)}</select></div>
       <div class="campo"><label for="nt-hito">Hito</label><select class="entrada" id="nt-hito" value=${f.hito} onChange=${e => set('hito', e.target.value)}><option value="">Sin hito</option>${ctx.hitos.map(x => html`<option value=${x.id}>${x.nombre}</option>`)}</select></div>
+      <div class="campo"><label for="nt-fase">Fase del roadmap</label><select class="entrada" id="nt-fase" value=${f.faseRoadmap} onChange=${e => set('faseRoadmap', e.target.value)}><option value="">Sin fase</option>${ctx.fasesRoadmap.map(x => html`<option value=${x.id}>${x.nombre}</option>`)}</select></div>
     </div>
     <div class="campo"><span class="campo-etq">Responsables</span><${ChipsIntegrantes} ctx=${ctx} valor=${f.asignados} alCambiar=${v => set('asignados', v)} /></div>
     <div class="campo"><span class="campo-etq">Etiquetas</span><${ChipsEtiquetas} ctx=${ctx} valor=${f.etiquetas} alCambiar=${v => set('etiquetas', v)} /></div>

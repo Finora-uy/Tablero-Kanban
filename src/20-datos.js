@@ -359,7 +359,11 @@ function armarContexto(e) {
   const horas = [...e.horas].map(([id, r]) => ({ ...r, id })).filter(r => r.inicio && r.fin && r.miembro);
   const horasPorTarea = new Map();
   for (const r of horas) if (r.tarea) horasPorTarea.set(r.tarea, (horasPorTarea.get(r.tarea) || 0) + (r.minutos || 0));
+  // Fases del Roadmap, para elegir a cuál pertenece cada tarea
+  const fasesRoadmap = [...e.roadmapFases].map(([id, x]) => ({ ...x, id })).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+    .map((f, i) => ({ id: f.id, corto: etiquetaFase(f, i), nombre: `${etiquetaFase(f, i)}: ${f.nombre}`, color: f.color }));
   return {
+    fasesRoadmap, fasesRoadmapPorId: new Map(fasesRoadmap.map(f => [f.id, f])),
     etapas, etapasPorId: new Map(etapas.map(x => [x.id, x])), trabajos, trabajosPorId: new Map(trabajos.map(x => [x.id, x])),
     notas: [...e.notas].map(([id, n]) => ({ ...n, id })).sort((a, b) => (b.creadaEn || '').localeCompare(a.creadaEn || '')),
     horas, horasPorTarea, cronometros: e.cronometros, disponibilidad: e.disponibilidad, ausencias: e.ausencias,

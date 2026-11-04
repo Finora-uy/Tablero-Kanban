@@ -10,6 +10,7 @@ const CAMPOS_LISTA = [
   { id: 'vence', nombre: 'Vence', valor: t => t.vence || '9999' },
   { id: 'estimacion', nombre: 'Pts', valor: t => t.estimacion ?? -1 },
   { id: 'hito', nombre: 'Hito', valor: (t, ctx) => (t.hito && ctx.hitosPorId.get(t.hito)?.fin) || '9999' },
+  { id: 'fase', nombre: 'Fase', valor: (t, ctx) => { const i = ctx.fasesRoadmap.findIndex(f => f.id === t.faseRoadmap); return i < 0 ? 999 : i; } },
 ];
 function VistaLista({ ctx, tareas, alAbrir, hayFiltros, alLimpiar }) {
   const [orden, setOrden] = useState({ campo: 'numero', dir: 1 });
@@ -27,6 +28,7 @@ function VistaLista({ ctx, tareas, alAbrir, hayFiltros, alLimpiar }) {
       <tbody>${filas.map(t => {
         const hecha = esHecha(t, ctx);
         const hito = t.hito && ctx.hitosPorId.get(t.hito);
+        const fase = t.faseRoadmap && ctx.fasesRoadmapPorId.get(t.faseRoadmap);
         return html`<tr key=${t.id} tabindex="0" onClick=${() => alAbrir(t.id)} onKeyDown=${e => { if (e.key === 'Enter') alAbrir(t.id); }}>
           <td class="num">${codigo(t, ctx)}</td>
           <td class="celda-titulo">${estaBloqueada(t, ctx) && !hecha && html`<span title="Bloqueada" style="color:var(--red-text);display:inline-block;vertical-align:-2px;margin-right:6px"><${Icono} n="candado" t=${14} /></span>`}${t.titulo}</td>
@@ -37,6 +39,7 @@ function VistaLista({ ctx, tareas, alAbrir, hayFiltros, alLimpiar }) {
           <td class=${'num t-dato ' + (t.vence && !hecha ? estadoVence(t.vence, ctx.hoy) : '')} title=${t.vence && !hecha ? cuandoVence(t.vence, ctx.hoy) : ''}>${t.vence ? fechaNum(t.vence) : '—'}</td>
           <td class="num">${t.estimacion ?? '—'}</td>
           <td>${hito ? hito.nombre : html`<span class="tenue">—</span>`}</td>
+          <td>${fase ? fase.corto : html`<span class="tenue">—</span>`}</td>
           <td><div class="t-etiquetas">${(t.etiquetas || []).map(id => ctx.etiquetasPorId.get(id)).filter(Boolean).map(x => html`<${Etiqueta} key=${x.id} x=${x} />`)}</div></td>
         </tr>`;
       })}</tbody>

@@ -99,6 +99,13 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
           ${ctx.hitos.map(x => html`<option value=${x.id}>${x.nombre}${x.fin ? ' · ' + fechaCorta(x.fin) : ''}</option>`)}
         </select>
 
+        <label class="prop-etq" for="det-fase">Fase del roadmap</label>
+        <select class="entrada" id="det-fase" value=${t.faseRoadmap || ''} disabled=${!editable}
+          onChange=${e => { const v = e.target.value || null; act({ faseRoadmap: v }, v ? `la ubicó en ${ctx.fasesRoadmapPorId.get(v)?.nombre || 'una fase del roadmap'}` : 'la sacó de su fase del roadmap'); }}>
+          <option value="">Sin fase</option>
+          ${ctx.fasesRoadmap.map(x => html`<option value=${x.id}>${x.nombre}</option>`)}
+        </select>
+
         <span class="prop-etq">Bloqueo</span>
         <div class="fila">
           <label class="opcion" style="padding-left:0"><input type="checkbox" id="det-bloqueada" checked=${!!t.bloqueada} disabled=${!editable}
