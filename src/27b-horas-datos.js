@@ -77,6 +77,7 @@ function superposiciones(r, excepto) {
 function pasarAEnCurso(tareaId) {
   const t = tareaId && estado.tareas.get(tareaId), enCurso = columnaEnCurso();
   if (!t || t.archivada || !enCurso || indiceColumna(t.columna) < 0 || indiceColumna(t.columna) >= indiceColumna(enCurso.id)) return;
+  if (!tieneEstimacion(t)) { avisar(`${(estado.config || CONFIG_BASE).prefijo}-${t.numero} sigue en ${nombreColumna(t.columna)}: para pasar a ${enCurso.nombre} necesita una estimación en puntos. El cronómetro sigue corriendo.`, 'info'); return; }
   const l = tareasDeColumna(enCurso.id, tareaId);
   acciones.moverTarea(tareaId, enCurso.id, l.length ? l[l.length - 1].orden + 1024 : 1024, { __que: `empezó a trabajarla: pasó a ${enCurso.nombre}` })
     .then(ok => { if (ok) avisar(`${(estado.config || CONFIG_BASE).prefijo}-${t.numero} pasó a ${enCurso.nombre}.`); });

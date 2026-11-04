@@ -32,6 +32,9 @@ const columnaEnCurso = () => {
   const i = cfg.columnas.findIndex(c => c.final), fin = i >= 0 ? i : cfg.columnas.length - 1;
   return fin > 1 ? cfg.columnas[fin - 2] : null;
 };
+// Regla del equipo: ninguna tarea pasa a En curso sin estimación en puntos
+const tieneEstimacion = t => Number(t.estimacion) > 0;
+const avisoSinEstimar = (t, col) => `${(estado.config || CONFIG_BASE).prefijo}-${t.numero ?? '?'} necesita una estimación en puntos antes de pasar a ${col.nombre}. Estimala en el detalle de la tarea.`;
 const indiceColumna = colId => (estado.config || CONFIG_BASE).columnas.findIndex(c => c.id === colId);
 // Responsables que todavía no dieron el OK (solo cuenta si hay 2 o más)
 const faltanOk = t => {
@@ -58,6 +61,11 @@ const acciones = {
     let numero = maxNum + 1;
     try { numero = await backend.siguienteNumero(maxNum); } catch (_) {}
     const columna = c.columna && cfg.columnas.some(x => x.id === c.columna) ? c.columna : (cfg.columnas[1] || cfg.columnas[0]).id;
+    const enCursoCol = columnaEnCurso();
+    if (enCursoCol && columna === enCursoCol.id && !tieneEstimacion(c)) {
+      avisar(`Para crear una tarea directo en ${enCursoCol.nombre} tiene que tener estimación en puntos. Elegí la estimación o creala en otra columna.`, 'error');
+      return null;
+    }
     const enCol = tareasDeColumna(columna);
     const orden = enCol.length ? enCol[enCol.length - 1].orden + 1024 : 1024;
     const ahora = ahoraISO();
@@ -95,6 +103,13 @@ const acciones = {
           avisar(`Para pasarla a ${nombreColumna(colId)} falta el OK de ${faltan.map(nombreMiembro).join(', ')}. Cada uno lo da en el detalle de la tarea, en ${(estado.config || CONFIG_BASE).columnas.find(c => esRevision(c.id))?.nombre || 'revisión'}.`, 'error');
           return Promise.resolve(false);
         }
+      }
+      // No pasa a En curso sin estimación en puntos
+      const enCursoCol = columnaEnCurso();
+      if (enCursoCol && colId === enCursoCol.id && !tieneEstimacion(t)) {
+        avisar(avisoSinEstimar({ ...t, id }, enCursoCol), 'error');
+        notificar(); // vuelve a dibujar el selector de estado en su valor real
+        return Promise.resolve(false);
       }
       // Cada vez que cambia a otra columna que no es la final, los OK empiezan de cero
       if (!esFinal(colId) && (t.aprobaciones || []).length) cambios.aprobaciones = [];

@@ -90,6 +90,7 @@ function VistaResumen({ ctx, alAbrir, alFiltrar }) {
         ${proxFecha && html`<p class="tenue" style="display:flex;gap:6px;align-items:center"><${Icono} n="estrella" t=${14} />Próxima fecha importante: <strong style="color:var(--text)">${proxFecha.titulo}</strong>, el ${fechaLarga(proxFecha.fecha)}${proxFecha.hora ? ` a las ${proxFecha.hora}` : ''} (${cuantoFalta(proxFecha.fecha, ctx.hoy)})</p>`}
       </section>
     </div>
+    <${PanelDesvios} ctx=${ctx} />
   </div>`;
 }
 

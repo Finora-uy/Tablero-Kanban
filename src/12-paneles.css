@@ -191,6 +191,10 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .tile .valor { font: 700 34px/1.05 var(--f-titulo); letter-spacing: -.04em; }
 .tile .valor.rojo { color: var(--red-text); }
 .tile .detalle-tile { font-size: 12.5px; color: var(--text-2); }
+.desvios .sub-titulo { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+.desvio-actual { padding: 10px 12px; border-radius: 8px; background: var(--card-2); border: 1px solid var(--line); line-height: 1.5; }
+.desvio-nota { font-size: 12.5px; line-height: 1.5; }
+.tabla-desvios td { vertical-align: top; }
 .paneles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 12px; }
 .panel { padding: 16px 18px 18px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); display: grid; gap: 14px; align-content: start; min-width: 0; }
 .panel h3 { font-size: 15px; letter-spacing: -.01em; }
