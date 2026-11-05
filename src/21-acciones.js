@@ -98,6 +98,13 @@ const acciones = {
     if (colId && colId !== t.columna) {
       // No pasa a la columna final si faltan OK de algún responsable
       if (esFinal(colId)) {
+        // Si tiene un único responsable, solo esa persona la pasa de revisión a la final
+        const unicos = (t.asignados || []).filter(a => estado.integrantes.has(a));
+        if (esRevision(t.columna) && unicos.length === 1 && unicos[0] !== yo()) {
+          avisar(`Solo ${nombreMiembro(unicos[0])}, que es quien la tiene a cargo, puede pasarla a ${nombreColumna(colId)}.`, 'error');
+          notificar();
+          return Promise.resolve(false);
+        }
         const faltan = faltanOk(t);
         if (faltan.length) {
           avisar(`Para pasarla a ${nombreColumna(colId)} falta el OK de ${faltan.map(nombreMiembro).join(', ')}. Cada uno lo da en el detalle de la tarea, en ${(estado.config || CONFIG_BASE).columnas.find(c => esRevision(c.id))?.nombre || 'revisión'}.`, 'error');
