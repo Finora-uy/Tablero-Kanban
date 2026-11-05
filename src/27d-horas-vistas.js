@@ -1,7 +1,9 @@
 
 /* ===== Horas: vistas ===== */
-function OpcionesTarea({ ctx }) {
-  const tareas = ctx.tareas.filter(t => !t.archivada).sort((a, b) => (b.numero || 0) - (a.numero || 0));
+// Al cargar horas no se ofrecen las tareas terminadas hace más de 2 días (salvo la que el registro ya tiene)
+const HORAS_DIAS_TAREA_HECHA = 2;
+function OpcionesTarea({ ctx, actual }) {
+  const tareas = ctx.tareas.filter(t => !t.archivada && (t.id === actual || !hechaVieja(t, ctx, Date.now(), HORAS_DIAS_TAREA_HECHA))).sort((a, b) => (b.numero || 0) - (a.numero || 0));
   return tareas.map(t => html`<option key=${t.id} value=${t.id}>${codigo(t, ctx)} · ${t.titulo.length > 60 ? t.titulo.slice(0, 60) + '…' : t.titulo}</option>`);
 }
 // Etapa, trabajo y tarea: los mismos tres selectores en el cronómetro, la carga manual y la edición
@@ -17,7 +19,7 @@ function SelectoresRegistro({ ctx, valor, alCambiar, idBase }) {
         ${ctx.trabajos.filter(x => x.grupo === g && (!x.legado || x.id === valor.trabajo)).map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}</optgroup>`)}
     </select>
     <select class="entrada" id=${idBase + '-tarea'} aria-label="Tarea del tablero" value=${valor.tarea || ''} onChange=${e => alCambiar({ tarea: e.target.value || null })}>
-      <option value="">Sin tarea del tablero</option><${OpcionesTarea} ctx=${ctx} />
+      <option value="">Sin tarea del tablero</option><${OpcionesTarea} ctx=${ctx} actual=${valor.tarea} />
     </select>`;
 }
 
