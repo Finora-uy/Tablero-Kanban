@@ -403,7 +403,7 @@ function ReportesHoras({ ctx, alAbrir }) {
 
 /* ----- La vista ----- */
 function VistaHoras({ ctx, editable, alAbrir }) {
-  const [sub, setSubS] = useState(() => (leer('finora-horas-sub') === 'reportes' ? 'reportes' : 'registro'));
+  const [sub, setSubS] = useState(() => { const v = leer('finora-horas-sub'); return v === 'reportes' || v === 'excel' ? v : 'registro'; });
   const setSub = s => { setSubS(s); guardar('finora-horas-sub', s); };
   const [editando, setEditando] = useState(null);
   return html`<div class="vista horas">
@@ -412,11 +412,14 @@ function VistaHoras({ ctx, editable, alAbrir }) {
       <div class="subpestanas" role="group" aria-label="Sección de horas">
         <button aria-pressed=${sub === 'registro'} onClick=${() => setSub('registro')}><${Icono} n="reloj" t=${15} /> Registro</button>
         <button aria-pressed=${sub === 'reportes'} onClick=${() => setSub('reportes')}><${Icono} n="grafico" t=${15} /> Reportes</button>
+        <button aria-pressed=${sub === 'excel'} onClick=${() => setSub('excel')}><${Icono} n="descargar" t=${15} /> Exportar Excel</button>
       </div>
     </div>
     ${sub === 'registro'
       ? html`<${RegistroHoras} ctx=${ctx} editable=${editable} alAbrir=${alAbrir} alEditar=${setEditando} />`
-      : html`<${ReportesHoras} ctx=${ctx} alAbrir=${alAbrir} />`}
+      : sub === 'reportes'
+        ? html`<${ReportesHoras} ctx=${ctx} alAbrir=${alAbrir} />`
+        : html`<${ExportarHoras} ctx=${ctx} />`}
     ${editando && html`<${ModalRegistro} ctx=${ctx} r=${editando} alCerrar=${() => setEditando(null)} />`}
   </div>`;
 }
