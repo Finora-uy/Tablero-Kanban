@@ -55,3 +55,43 @@
   .aus-yo { display: none; }
   .aus-celda .avatar { width: 16px !important; height: 16px !important; font-size: 8px !important; }
 }
+
+/* ===== Panel de Líder ===== */
+.tabla-lider td.num, .tabla-lider th { white-space: nowrap; }
+.lider-fila { cursor: pointer; }
+.lider-carga { display: flex; align-items: center; gap: 10px; min-width: 190px; }
+.lider-barras { position: relative; flex: 1; min-width: 110px; height: 12px; }
+.lider-barra { position: absolute; left: 0; border-radius: 6px; }
+.lider-barra.disp { top: 0; height: 12px; background: var(--blue-tint); box-shadow: inset 0 0 0 1px var(--line-2); }
+.lider-barra.asig { top: 3px; height: 6px; background: var(--amber); }
+.lider-barra.asig.sobre { background: var(--red); }
+.lider-detalle > td { background: var(--card-2); padding: 10px 14px; }
+.lider-tareas { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.lider-aviso { margin: 8px 0 0; font-size: 12.5px; }
+
+/* Mapa de carga */
+.mapa-tabla { border-collapse: separate; border-spacing: 3px; }
+.mapa-tabla th, .mapa-tabla td { padding: 0; }
+.mapa-tabla thead th { text-align: center; font-weight: 500; }
+.mapa-tabla th:first-child, .mapa-tabla td:first-child { padding-right: 10px; text-align: left; white-space: nowrap; }
+.mapa-dia.finde { opacity: .6; }
+.mapa-dia.hoy { color: var(--amber-text); }
+.mapa-celda { height: 52px; min-width: 64px; text-align: center; vertical-align: middle; border-radius: 6px; background: var(--card-2); border: 1px solid var(--line); font: 500 13px/1.2 var(--f-mono); }
+.mapa-celda strong { display: block; font-weight: 600; }
+.mapa-celda.finde { background: transparent; border-style: dashed; }
+.mapa-celda.hoy { outline: 2px solid var(--amber); outline-offset: -2px; }
+.mapa-celda:focus-visible { outline: 2px solid var(--focus); }
+.mapa-celda.n1, .mapa-muestra.n1 { background: rgba(192, 132, 58, .20); border-color: rgba(192, 132, 58, .45); }
+.mapa-celda.n2, .mapa-muestra.n2 { background: rgba(192, 132, 58, .42); border-color: rgba(192, 132, 58, .6); }
+.mapa-celda.n3, .mapa-muestra.n3 { background: rgba(192, 132, 58, .70); border-color: var(--amber); color: var(--on-amber); }
+.mapa-celda.n4, .mapa-muestra.n4 { background: var(--amber); border-color: var(--amber); color: var(--on-amber); }
+.mapa-celda.ausente, .mapa-muestra.ausente { background: repeating-linear-gradient(135deg, var(--card-2) 0 5px, var(--line) 5px 7px); color: var(--text-3); }
+.mapa-no { font-size: 11px; color: var(--text-2); }
+.mapa-disp { display: block; font: 400 10.5px/1.2 var(--f-texto); opacity: .75; margin-top: 2px; }
+.mapa-total { padding-left: 8px !important; text-align: center; white-space: nowrap; }
+.mapa-tabla.mes .mapa-celda { height: 34px; min-width: 24px; font-size: 11px; border-radius: 4px; }
+.mapa-tabla.mes .mapa-dia { font: 500 10.5px/1.3 var(--f-mono); color: var(--text-2); }
+.mapa-tabla.mes .mapa-dia span { display: block; opacity: .6; font-size: 9.5px; }
+.mapa-escala { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 12px; color: var(--text-2); }
+.mapa-escala > span { display: inline-flex; align-items: center; gap: 6px; }
+.mapa-muestra { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--line); display: inline-block; }

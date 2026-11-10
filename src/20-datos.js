@@ -1,5 +1,5 @@
 'use strict';
-const { h, render } = preact;
+const { h, render, Fragment } = preact;
 const { useState, useEffect, useRef, useCallback, useLayoutEffect, useErrorBoundary } = preactHooks;
 const html = htm.bind(h);
 
@@ -98,7 +98,7 @@ const ESTIMACIONES = [1, 2, 3, 5, 8, 13];
 const VISTAS = [
   { id: 'tablero', nombre: 'Tablero' }, { id: 'lista', nombre: 'Lista' }, { id: 'calendario', nombre: 'Calendario' },
   { id: 'hitos', nombre: 'Hitos' }, { id: 'roadmap', nombre: 'Roadmap' }, { id: 'resumen', nombre: 'Resumen' }, { id: 'equipo', nombre: 'Equipo' },
-  { id: 'horas', nombre: 'Horas' }, { id: 'disponibilidad', nombre: 'Disponibilidad' }, { id: 'actividad', nombre: 'Actividad' },
+  { id: 'horas', nombre: 'Horas' }, { id: 'disponibilidad', nombre: 'Disponibilidad' }, { id: 'lider', nombre: 'Panel de Líder' }, { id: 'actividad', nombre: 'Actividad' },
 ];
 const CARRILES = [
   { id: 'ninguno', nombre: 'Sin carriles' }, { id: 'integrante', nombre: 'Por integrante' }, { id: 'prioridad', nombre: 'Por prioridad' },
@@ -403,6 +403,7 @@ function filtrar(tareas, f, ctx) {
     if (q && !normalizar(`${codigo(t, ctx)} ${t.titulo} ${t.descripcion || ''}`).includes(q)) return false;
     if (f.integrantes.length && !f.integrantes.some(i => i === 'sin' ? !(t.asignados || []).length : (t.asignados || []).includes(i))) return false;
     if (f.etiquetas.length && !f.etiquetas.some(x => (t.etiquetas || []).includes(x))) return false;
+    if (f.estados.length && !f.estados.includes(t.columna)) return false;
     if (f.prioridades.length && !f.prioridades.includes(t.prioridad || 'media')) return false;
     if (f.tipos.length && !f.tipos.includes(t.tipo || 'tarea')) return false;
     if (f.hito && (f.hito === 'sin' ? !!t.hito : t.hito !== f.hito)) return false;
@@ -412,8 +413,8 @@ function filtrar(tareas, f, ctx) {
     return true;
   });
 }
-const FILTROS_VACIOS = { q: '', integrantes: [], etiquetas: [], prioridades: [], tipos: [], hito: '', mias: false, vencidas: false, bloqueadas: false, archivadas: false };
+const FILTROS_VACIOS = { q: '', integrantes: [], estados: [], etiquetas: [], prioridades: [], tipos: [], hito: '', mias: false, vencidas: false, bloqueadas: false, archivadas: false };
 function cargarFiltros() {
   try { return { ...FILTROS_VACIOS, ...JSON.parse(leer('finora-filtros') || '{}'), q: '' }; } catch (_) { return { ...FILTROS_VACIOS }; }
 }
-const cuantosFiltros = f => f.integrantes.length + f.etiquetas.length + f.prioridades.length + f.tipos.length + (f.hito ? 1 : 0) + (f.mias ? 1 : 0) + (f.vencidas ? 1 : 0) + (f.bloqueadas ? 1 : 0) + (f.archivadas ? 1 : 0);
+const cuantosFiltros = f => f.integrantes.length + f.estados.length + f.etiquetas.length + f.prioridades.length + f.tipos.length + (f.hito ? 1 : 0) + (f.mias ? 1 : 0) + (f.vencidas ? 1 : 0) + (f.bloqueadas ? 1 : 0) + (f.archivadas ? 1 : 0);

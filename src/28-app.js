@@ -56,6 +56,8 @@ function BarraFiltros({ ctx, filtros, setFiltros, vista, carril, setCarril, edit
       ${toggle('mias', 'Mis tareas')}
       <${FiltroMulti} nombre="Responsable" idBase="f-int" valor=${filtros.integrantes} alCambiar=${v => set({ integrantes: v })}
         opciones=${[...ctx.miembros.map(m => ({ id: m.id, nombre: m.nombre, pre: html`<${Avatar} m=${m} t=${20} />` })), { id: 'sin', nombre: 'Sin asignar' }]} />
+      <${FiltroMulti} nombre="Estado" idBase="f-est" valor=${filtros.estados} alCambiar=${v => set({ estados: v })}
+        opciones=${ctx.columnas.map(c => ({ id: c.id, nombre: c.nombre }))} />
       <${FiltroMulti} nombre="Etiqueta" idBase="f-etq" valor=${filtros.etiquetas} alCambiar=${v => set({ etiquetas: v })}
         opciones=${ctx.etiquetas.map(x => ({ id: x.id, nombre: x.nombre, pre: html`<span class="chip sin-punto" style=${`width:10px;height:10px;padding:0;border-radius:50%;background:var(--c-${x.color})`}></span>` }))} />
       <${FiltroMulti} nombre="Prioridad" idBase="f-pri" valor=${filtros.prioridades} alCambiar=${v => set({ prioridades: v })} opciones=${PRIORIDADES} />
@@ -210,6 +212,8 @@ function App() {
     cuerpo = html`<${VistaRoadmap} ctx=${ctx} editable=${editable} alModal=${setModal} />`;
   } else if (vista === 'disponibilidad') {
     cuerpo = html`<${VistaDisponibilidad} ctx=${ctx} editable=${editable} />`;
+  } else if (vista === 'lider') {
+    cuerpo = html`<${PanelLider} ctx=${ctx} alAbrir=${setAbierta} />`;
   } else if (vista === 'horas') {
     cuerpo = html`<${VistaHoras} ctx=${ctx} editable=${editable} alAbrir=${setAbierta} />`;
   } else {
