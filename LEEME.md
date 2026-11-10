@@ -104,6 +104,21 @@ En una tarea con varios responsables, el botón **Recordar OK** les manda un ema
 
 ⚠️ La clave secret de Supabase da acceso total a la base: va **solo** en Vercel, nunca en el código ni en el chat. Para que nadie reciba spam, se puede recordar **una vez cada 6 horas por persona y tarea**.
 
+## Alerta de tareas vencidas (opcional)
+
+**Todos los lunes a las 8:00 (hora de Uruguay)** el tablero le manda un email a cada integrante que tenga tareas vencidas, con la lista y los días de atraso. Lo dispara **Vercel Cron** (gratis) sobre `api/alerta-vencidas.js` y lo manda Brevo, igual que los recordatorios de OK. Cuentan las tareas con fecha anterior a hoy que no están en la columna final, ni archivadas, ni en Ideas.
+
+Usa las mismas variables de arriba y suma una:
+
+| Variable | Qué es |
+|---|---|
+| `CRON_SECRET` | una contraseña larga y al azar (por ejemplo, 32 caracteres). Vercel se la manda sola al cron; sin ella nadie más puede disparar los mails. Marcala *Sensitive* |
+
+- El horario del cron está en `vercel.json`: `0 11 * * 1` es lunes 11:00 UTC, o sea 8:00 en Uruguay (no tiene horario de verano). En el plan gratis Vercel lo corre **en algún momento de esa hora** (entre las 8:00 y las 8:59).
+- Solo le llega a quien ya entró al tablero con su cuenta y se sumó a **Equipo**: sin cuenta no hay email al cual escribirle.
+- Se manda una sola alerta por día, aunque Vercel repita la llamada.
+- Para probarla sin esperar al lunes: **Vercel → Settings → Cron Jobs → Run** (corre en ese momento y manda los mails de verdad).
+
 ## Cosas a saber
 
 - **Si nadie entra en 7 días, Supabase pausa el proyecto.**

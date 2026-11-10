@@ -3,6 +3,9 @@
   "framework": null,
   "buildCommand": "node build.mjs",
   "outputDirectory": "dist",
+  "crons": [
+    { "path": "/api/alerta-vencidas", "schedule": "0 11 * * 1" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
