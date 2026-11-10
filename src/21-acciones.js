@@ -105,6 +105,13 @@ const acciones = {
           notificar();
           return Promise.resolve(false);
         }
+        // No pasa a la columna final con subtareas sin tildar
+        const sinTildar = (t.subtareas || []).filter(s => !s.hecho);
+        if (sinTildar.length) {
+          avisar(`Para pasarla a ${nombreColumna(colId)} falta tildar ${sinTildar.length === 1 ? '1 subtarea' : sinTildar.length + ' subtareas'}: ${sinTildar.slice(0, 2).map(s => '«' + s.texto + '»').join(', ')}${sinTildar.length > 2 ? ' y ' + (sinTildar.length - 2) + ' más' : ''}. Se tildan en el detalle de la tarea.`, 'error');
+          notificar();
+          return Promise.resolve(false);
+        }
         const faltan = faltanOk(t);
         if (faltan.length) {
           avisar(`Para pasarla a ${nombreColumna(colId)} falta el OK de ${faltan.map(nombreMiembro).join(', ')}. Cada uno lo da en el detalle de la tarea, en ${(estado.config || CONFIG_BASE).columnas.find(c => esRevision(c.id))?.nombre || 'revisión'}.`, 'error');
