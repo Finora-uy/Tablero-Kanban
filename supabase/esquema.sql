@@ -198,3 +198,92 @@ begin
   alter publication supabase_realtime add table public.equipo_permitido;
 exception when duplicate_object then null;
 end $$;
+
+-- =====================================================================
+-- GitHub: ramas, commits y PRs vinculados a las tareas (FIN-n)
+-- Solo los escribe el webhook (api/github-webhook.js) con la clave secret.
+-- El equipo solo los lee. `tarea` es el número de la tarea (el n de FIN-n).
+-- =====================================================================
+
+-- Cada aviso que manda GitHub, para no procesarlo dos veces (X-GitHub-Delivery)
+create table if not exists public.github_entregas (
+  id       text primary key,
+  evento   text not null,
+  estado   text not null default 'procesando' check (estado in ('procesando', 'ok', 'ignorado', 'error')),
+  detalle  text,
+  recibido timestamptz not null default now()
+);
+
+create table if not exists public.github_ramas (
+  nombre      text primary key,
+  tarea       integer,                 -- null: el nombre no tiene fin-n
+  url         text,
+  autor_login text,
+  creada      timestamptz,
+  ultimo_push timestamptz,
+  borrada     timestamptz              -- null: sigue existiendo
+);
+create index if not exists github_ramas_tarea on public.github_ramas (tarea);
+
+-- Un commit puede estar en más de una rama: la clave es (rama, sha)
+create table if not exists public.github_commits (
+  rama        text not null,
+  sha         text not null,
+  tarea       integer,
+  mensaje     text not null default '',
+  autor       text,                    -- nombre en git
+  autor_login text,                    -- usuario de GitHub, si lo hay
+  fecha       timestamptz,
+  url         text,
+  primary key (rama, sha)
+);
+create index if not exists github_commits_tarea on public.github_commits (tarea);
+
+create table if not exists public.github_prs (
+  numero      integer primary key,
+  titulo      text not null default '',
+  rama        text,
+  tareas      integer[] not null default '{}',   -- de la rama y de la línea "Refs: FIN-n" del cuerpo
+  estado      text not null check (estado in ('abierto', 'cerrado', 'mergeado')),
+  borrador    boolean not null default false,
+  revision    text check (revision in ('aprobado', 'cambios')),  -- última revisión que decide; null: sin revisar
+  autor_login text,
+  url         text,
+  creado      timestamptz,
+  actualizado timestamptz,
+  mergeado    timestamptz
+);
+create index if not exists github_prs_tareas on public.github_prs using gin (tareas);
+
+revoke all on public.github_entregas, public.github_ramas, public.github_commits, public.github_prs from anon;
+revoke all on public.github_entregas from authenticated;
+grant select on public.github_ramas, public.github_commits, public.github_prs to authenticated;
+grant select, insert, update, delete on public.github_entregas, public.github_ramas, public.github_commits, public.github_prs to service_role;
+
+alter table public.github_entregas enable row level security;
+alter table public.github_ramas enable row level security;
+alter table public.github_commits enable row level security;
+alter table public.github_prs enable row level security;
+
+drop policy if exists "equipo lee ramas" on public.github_ramas;
+drop policy if exists "equipo lee commits" on public.github_commits;
+drop policy if exists "equipo lee prs" on public.github_prs;
+create policy "equipo lee ramas"   on public.github_ramas   for select to authenticated using ((select public.es_del_equipo()));
+create policy "equipo lee commits" on public.github_commits for select to authenticated using ((select public.es_del_equipo()));
+create policy "equipo lee prs"     on public.github_prs     for select to authenticated using ((select public.es_del_equipo()));
+
+do $$
+begin
+  alter publication supabase_realtime add table public.github_ramas;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.github_commits;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.github_prs;
+exception when duplicate_object then null;
+end $$;

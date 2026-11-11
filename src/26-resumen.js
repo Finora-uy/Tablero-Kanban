@@ -150,7 +150,7 @@ function VistaEquipo({ ctx, e, editable, alEditar, alVerTareas, alSoyYo }) {
 /* ===== Actividad ===== */
 function VistaActividad({ ctx, alAbrir }) {
   const eventos = [];
-  for (const t of ctx.tareas) for (const ev of (t.historial || [])) eventos.push({ en: ev.en, quien: ev.quien, que: ev.que, t });
+  for (const t of ctx.tareas) for (const ev of (t.historial || [])) eventos.push({ en: ev.en, quien: ev.quien, por: ev.por, que: ev.que, t });
   for (const c of ctx.comentarios) { const t = ctx.porId.get(c.tareaId); if (t) eventos.push({ en: c.en, quien: c.autor, que: 'comentó en', t, cita: c.texto }); }
   eventos.sort((a, b) => (a.en < b.en ? 1 : -1));
   const lista = eventos.slice(0, 150);
@@ -166,7 +166,7 @@ function VistaActividad({ ctx, alAbrir }) {
     <div class="actividad">${dias.map(d => html`<section class="act-dia" key=${d.dia}>
       <h3 class="etiqueta-mono">${tituloDia(d.dia)}</h3>
       <ul class="act-lista">${d.eventos.map((ev, i) => {
-        const m = ctx.integrantes.get(ev.quien);
+        const m = ev.por === 'github' ? { nombre: 'GitHub', color: 'pizarra' } : ctx.integrantes.get(ev.quien);
         return html`<li class="act-item" key=${i}>
           <${Avatar} m=${m} t=${26} />
           <p class="texto"><strong>${m ? m.nombre : 'Alguien'}</strong> ${ev.que === 'creó la tarea' ? 'creó' : ev.que} · <button onClick=${() => alAbrir(ev.t.id)}>${codigo(ev.t, ctx)}</button> ${ev.t.titulo}

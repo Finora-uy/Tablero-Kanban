@@ -36,6 +36,9 @@ const RUTAS = {
   lapiz: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
   grafico: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
   sobre: 'M3 6h18v12H3zM3 7l9 6 9-6',
+  rama: 'M6 3v12M18 9a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM18 9a9 9 0 0 1-9 9',
+  pr: 'M18 21a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM6 9a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM13 6h3a2 2 0 0 1 2 2v7M6 9v12',
+  commit: 'M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM3 12h6M15 12h6',
 };
 function Icono({ n, t = 16, clase = '' }) {
   return html`<svg class=${'ic ' + clase} width=${t} height=${t} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${RUTAS[n]} /></svg>`;

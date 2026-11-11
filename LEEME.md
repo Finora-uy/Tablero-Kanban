@@ -119,6 +119,39 @@ Usa las mismas variables de arriba y suma una:
 - Se manda una sola alerta por día, aunque Vercel repita la llamada.
 - Para probarla sin esperar al lunes: **Vercel → Settings → Cron Jobs → Run** (corre en ese momento y manda los mails de verdad).
 
+## Integración con GitHub (opcional)
+
+Cada tarea muestra en la sección **Código** sus ramas, PRs (con su estado de revisión) y commits del repo del producto, [`IngSoft-ProyectoGrado/Finora`](https://github.com/IngSoft-ProyectoGrado/Finora). Solo se aceptan avisos de ese repo; si algún día cambia, se configura con la variable `GITHUB_REPO` (formato `dueño/repo`). Lo recibe el servicio `api/github-webhook.js` cuando GitHub avisa, y lo guarda en las tablas `github_*` de Supabase. Detalle del plan: [`docs/plan-integracion-github.md`](docs/plan-integracion-github.md).
+
+**Convención para que una tarea quede vinculada:**
+
+- **Rama:** `fin-n` en cualquier parte del nombre, por ejemplo `feature/fin-12-importar-csv`. No importan las mayúsculas.
+- **Cuerpo del PR:** una línea `Refs: FIN-12` (puede tener varias tareas: `Refs: FIN-12, FIN-13`).
+- No se usa el título del PR ni el mensaje de los commits.
+
+**Qué hace solo:**
+
+- Cuando se crea la rama, la tarea pasa a **En curso**. Si no tiene estimación en puntos, no se mueve y queda una nota en el historial.
+- Cuando el PR queda listo para revisión (abierto y no borrador), la tarea pasa a **En revisión**.
+- Al mergear **no** pasa a Hecho, porque cada responsable tiene que dar su OK. El PR se ve como *PR mergeado*.
+- Nunca retrocede una tarea, ni toca las archivadas. Cada movimiento queda en el historial firmado por **GitHub**.
+- Ignora los bots (Dependabot), los tags y los pushes a `main`.
+
+**Puesta en marcha:**
+
+1. Confirmar con Nico que el repo `IngSoft-ProyectoGrado/Finora` permite crear webhooks (hace falta ser admin del repo o de la organización).
+2. Volver a correr [`supabase/esquema.sql`](supabase/esquema.sql) en el SQL Editor. No borra nada: solo suma las tablas de GitHub.
+3. Generar un secreto largo y al azar y cargarlo en Vercel como `GITHUB_WEBHOOK_SECRET` (*Production*, *Sensitive*). También hace falta `SUPABASE_SERVICE_ROLE_KEY` (la misma de los recordatorios).
+4. Volver a publicar.
+5. En GitHub, en el repo `IngSoft-ProyectoGrado/Finora` (no en el del tablero): **Settings → Webhooks → Add webhook**:
+   - **Payload URL:** `https://tablero-finora.vercel.app/api/github-webhook` (tu link de Vercel).
+   - **Content type:** `application/json`.
+   - **Secret:** el mismo valor de `GITHUB_WEBHOOK_SECRET`.
+   - **Events:** *Let me select individual events* → **Branch or tag creation**, **Branch or tag deletion**, **Pushes**, **Pull requests**, **Pull request reviews**.
+6. GitHub manda un *ping*: en **Recent Deliveries** tiene que aparecer con respuesta **200**.
+
+Cada aviso se procesa una sola vez (se anota en `github_entregas`). Si uno falló, en **Recent Deliveries → Redeliver** se vuelve a procesar.
+
 ## Cosas a saber
 
 - **Si nadie entra en 7 días, Supabase pausa el proyecto.**

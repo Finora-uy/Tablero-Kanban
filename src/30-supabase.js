@@ -170,7 +170,50 @@ function conectarDatosWeb(cliente, user) {
   };
   COLECCIONES.forEach(abrirSuscripcion);
   crearPresencia(cliente, user.id);
+  conectarGithub(cliente);
   notificar();
+}
+
+/* ===== GitHub: ramas, commits y PRs vinculados a las tareas (los escribe api/github-webhook) ===== */
+function conectarGithub(cliente) {
+  const TABLAS = { ramas: 'github_ramas', commits: 'github_commits', prs: 'github_prs' };
+  estado.github = { ramas: [], commits: [], prs: [], cargado: false, error: false };
+  const leerTabla = async clave => {
+    const filas = [];
+    for (let desde = 0; ; desde += 1000) {
+      const lote = await sb(cliente.from(TABLAS[clave]).select('*').range(desde, desde + 999));
+      filas.push(...lote);
+      if (lote.length < 1000) break;
+    }
+    return filas;
+  };
+  const cargar = async claves => {
+    try {
+      const listas = await Promise.all(claves.map(leerTabla));
+      const g = { ...estado.github, cargado: true, error: false };
+      claves.forEach((k, i) => { g[k] = listas[i]; });
+      estado.github = g;
+    } catch (err) {
+      // Si todavía no se corrió la parte de GitHub de esquema.sql, la sección Código no aparece
+      console.warn('GitHub: no se pudieron leer los datos', err);
+      estado.github = { ...estado.github, cargado: true, error: true };
+    }
+    notificar();
+  };
+  // Cada cambio recarga solo esa tabla (son chicas), juntando los que llegan seguidos
+  const pendientes = new Set();
+  let espera = null;
+  const canal = cliente.channel('github-tablero');
+  for (const [clave, tabla] of Object.entries(TABLAS)) {
+    canal.on('postgres_changes', { event: '*', schema: 'public', table: tabla }, () => {
+      pendientes.add(clave);
+      clearTimeout(espera);
+      espera = setTimeout(() => { const l = [...pendientes]; pendientes.clear(); cargar(l); }, 400);
+    });
+  }
+  // Al conectar (y al reconectar) se vuelve a leer todo para no perder cambios; si el tiempo real no conecta, igual se ve lo guardado
+  canal.subscribe(s => { if (s === 'SUBSCRIBED') cargar(Object.keys(TABLAS)); });
+  cargar(Object.keys(TABLAS));
 }
 
 /* ===== Recordatorio por email para dar el OK (lo manda el servicio api/recordar-ok) ===== */

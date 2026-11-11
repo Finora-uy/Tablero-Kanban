@@ -150,11 +150,12 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
 
       <${HorasDeTarea} t=${t} ctx=${ctx} editable=${editable} />
       <${Enlaces} t=${t} editable=${editable} act=${act} />
+      <${CodigoDeTarea} t=${t} ctx=${ctx} />
       <${Comentarios} t=${t} ctx=${ctx} editable=${editable} />
 
       <details>
         <summary><${Icono} n="historial" t=${15} />Historial <span class="mono tenue">${(t.historial || []).length}</span></summary>
-        <ul class="historial">${[...(t.historial || [])].reverse().map((ev, i) => html`<li key=${i}><span class="mono">${momento(ev.en)}</span><span><strong>${ev.quien ? nombreDe(ev.quien, ctx) : 'Alguien'}</strong> ${ev.que}</span></li>`)}</ul>
+        <ul class="historial">${[...(t.historial || [])].reverse().map((ev, i) => html`<li key=${i}><span class="mono">${momento(ev.en)}</span><span><strong>${ev.por === 'github' ? 'GitHub' : ev.quien ? nombreDe(ev.quien, ctx) : 'Alguien'}</strong> ${ev.que}</span></li>`)}</ul>
       </details>
     </div>
 
