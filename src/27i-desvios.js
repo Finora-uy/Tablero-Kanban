@@ -1,8 +1,7 @@
 /* ===== Resumen: tratamiento de desvíos =====
    Dos mediciones por semana (lunes a domingo), cada una con su nivel:
-   - Carga horaria: horas estimadas de las tareas con vencimiento en la semana como porcentaje de las horas que
-     cada uno dijo tener disponibles (Disponibilidad). Las tareas se estiman en puntos: 1 punto = 1 hora.
-     Está bien entre 50 % y 100 %: fuera de esa banda, hasta 20 puntos es Atención y más de 20 es Crítico.
+   - Carga horaria: horas que cada uno registró en la semana (Horas) como porcentaje de las horas que dijo tener
+     disponibles (Disponibilidad). Está bien entre 50 % y 100 %: fuera de esa banda, hasta 20 puntos es Atención y más de 20 es Crítico.
    - Compromiso: tareas con vencimiento en la semana que se terminaron a tiempo.
    El nivel de la semana es el peor de los dos. Dos semanas seguidas en Atención pasan a Crítico. */
 const NIVELES_DESVIO = [
@@ -31,17 +30,12 @@ function calcularDesvios(ctx, semanas = 6) {
       const sem = semanaDe(ctx, m.id);
       fechasDeSemana(lunes).forEach((f, d) => { if (f <= hasta && ausencia(ctx, m.id, f) === null) plan += minutosFranjas(sem[d]); });
     }
-    // Horas estimadas: los puntos de cada tarea con vencimiento esa semana, repartidos entre sus responsables (en minutos)
+    // Horas registradas por quienes cargaron su disponibilidad, hasta el fin de la semana medida (en minutos)
     const comprometidas = ctx.tareas.filter(t => !t.archivada && t.vence && t.vence >= lunes && t.vence <= hasta);
-    let real = 0;
-    for (const t of comprometidas) {
-      const asig = (t.asignados || []).filter(id => ctx.integrantes.has(id));
-      if (!asig.length || !(Number(t.estimacion) > 0)) continue;
-      const parte = Number(t.estimacion) * HORAS_POR_PUNTO * 60 / asig.length;
-      real += parte * asig.filter(id => conDisp.some(m => m.id === id)).length;
-    }
-    // Sin horas estimadas esa semana no hay contra qué medir
-    const pEsf = plan > 0 && real > 0 ? real / plan * 100 : null; // carga horaria: estimado como % de lo disponible
+    const ids = new Set(conDisp.map(m => m.id));
+    const real = ctx.horas.filter(r => ids.has(r.miembro) && r.fecha >= lunes && r.fecha <= hasta).reduce((s, r) => s + (r.minutos || 0), 0);
+    // Sin disponibilidad esa semana no hay contra qué medir (sin horas registradas, la carga es 0 %)
+    const pEsf = plan > 0 ? real / plan * 100 : null; // carga horaria: registrado como % de lo disponible
     // Compromiso
     const cumplidas = comprometidas.filter(t => {
       if (!esHecha(t, ctx)) return false;
@@ -73,24 +67,24 @@ function PanelDesvios({ ctx }) {
     <div class="seccion-cab"><h3>Tratamiento de desvíos</h3>${nivel && html`<span class=${'tag ' + nivel.tag}>${nivel.nombre}</span>`}</div>
     <p class="sub">La carga horaria y el cumplimiento del compromiso se clasifican en tres niveles, cada uno con una respuesta definida. Se miden por semana, de lunes a domingo.</p>
     ${nivel ? html`<p class="desvio-actual"><strong>Semana del ${rango(actual)}${actual.enCurso ? ' (en curso)' : ''}: ${nivel.nombre}.</strong> ${actual.porRacha ? 'Es la segunda semana seguida en Atención. ' : ''}${nivel.respuesta}</p>`
-      : html`<p class="tenue">Todavía no hay datos para medir: se calculan con las tareas estimadas con vencimiento, la disponibilidad de cada uno y lo que se terminó a tiempo.</p>`}
+      : html`<p class="tenue">Todavía no hay datos para medir: se calculan con las horas registradas, la disponibilidad de cada uno y lo que se terminó a tiempo.</p>`}
     <div class="tabla-env"><table class="tabla tabla-desvios">
       <thead><tr><th>Nivel</th><th>Condición</th><th>Respuesta</th></tr></thead>
       <tbody>${NIVELES_DESVIO.map(n => html`<tr key=${n.id} style="cursor:default"><td><span class=${'tag ' + n.tag}>${n.nombre}</span></td><td>${n.condicion}</td><td>${n.respuesta}</td></tr>`)}</tbody>
     </table></div>
     <h4 class="sub-titulo">Últimas semanas</h4>
     <div class="tabla-env"><table class="tabla tabla-desvios">
-      <thead><tr><th>Semana</th><th>Carga horaria (estimado vs disponible)</th><th>Compromiso</th><th>Nivel</th></tr></thead>
+      <thead><tr><th>Semana</th><th>Carga horaria (registrado vs disponible)</th><th>Compromiso</th><th>Nivel</th></tr></thead>
       <tbody>${[...filas].reverse().map(f => {
         const n = f.nivel && NIVELES_DESVIO.find(x => x.id === f.nivel);
         return html`<tr key=${f.lunes} style="cursor:default">
           <td>${rango(f)}${f.enCurso ? html` <span class="tenue">(en curso)</span>` : ''}</td>
-          <td>${celdaPct(f.pEsf, `${horasTexto(f.real)} estimadas contra ${horasTexto(f.plan)} disponibles`, nivelDeCarga)}${f.pEsf !== null && html` <span class="tenue mono">${horasTexto(f.real)} est. / ${horasTexto(f.plan)} disp.</span>`}</td>
+          <td>${celdaPct(f.pEsf, `${horasTexto(f.real)} registradas contra ${horasTexto(f.plan)} disponibles`, nivelDeCarga)}${f.pEsf !== null && html` <span class="tenue mono">${horasTexto(f.real)} reg. / ${horasTexto(f.plan)} disp.</span>`}</td>
           <td>${celdaPct(f.pCom, `${f.cumplidas} de ${f.comprometidas} tareas con vencimiento esa semana se terminaron a tiempo`, nivelDeDesvio)}${f.pCom !== null && html` <span class="tenue mono">${f.cumplidas} de ${f.comprometidas}</span>`}</td>
           <td>${n ? html`<span class=${'tag ' + n.tag}>${n.nombre}</span>${f.porRacha ? html` <span class="tenue">2 seguidas en Atención</span>` : ''}` : html`<span class="tenue">Sin datos</span>`}</td>
         </tr>`;
       })}</tbody>
     </table></div>
-    <p class="tenue desvio-nota"><strong>Carga horaria:</strong> lo estimado (puntos de las tareas con vencimiento esa semana, a 1 punto = 1 hora, repartidos entre sus responsables) como porcentaje de lo que cada uno tiene disponible en Disponibilidad. Está bien entre 50 % y 100 %; cuentan solo quienes cargaron su disponibilidad. <strong>Compromiso:</strong> el porcentaje de tareas con vencimiento esa semana que no se terminó a tiempo. El nivel de la semana es el peor de los dos.</p>
+    <p class="tenue desvio-nota"><strong>Carga horaria:</strong> las horas que cada uno registró esa semana en Horas, como porcentaje de lo que tiene disponible en Disponibilidad (sin contar los días que no está). Está bien entre 50 % y 100 %; cuentan solo quienes cargaron su disponibilidad. <strong>Compromiso:</strong> el porcentaje de tareas con vencimiento esa semana que no se terminó a tiempo. El nivel de la semana es el peor de los dos.</p>
   </section>`;
 }
