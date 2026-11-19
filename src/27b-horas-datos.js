@@ -83,6 +83,9 @@ function pasarAEnCurso(tareaId) {
     .then(ok => { if (ok) avisar(`${(estado.config || CONFIG_BASE).prefijo}-${t.numero} pasó a ${enCurso.nombre}.`); });
 }
 
+// Tareas en las que corre un cronómetro: la principal y las que se sumaron para trabajar a la vez
+const tareasDelCrono = c => [c && c.tarea, ...((c && c.tareasExtra) || [])].filter((x, i, a) => x && a.indexOf(x) === i);
+
 const accionesHoras = {
   async iniciar(datos = {}) {
     const yoId = yo();
@@ -90,15 +93,15 @@ const accionesHoras = {
     if (estado.cronometros.has(yoId)) await accionesHoras.detener();
     const ok = await conManejo(backend.crear('cronometros/' + yoId, {
       inicio: ahoraISO(), descripcion: (datos.descripcion || '').trim(), etapa: datos.etapa || null,
-      trabajo: datos.trabajo || null, tarea: datos.tarea || null, userId: estado.userId || null,
+      trabajo: datos.trabajo || null, tarea: datos.tarea || null, tareasExtra: datos.tareasExtra || [], userId: estado.userId || null,
     }));
-    if (ok) pasarAEnCurso(datos.tarea);
+    if (ok) tareasDelCrono(datos).forEach(pasarAEnCurso);
     return ok;
   },
   editarCronometro(cambios) {
     const yoId = yo();
     if (!yoId || !estado.cronometros.has(yoId)) return Promise.resolve(false);
-    return conManejo(backend.actualizar('cronometros/' + yoId, cambios)).then(ok => { if (ok && cambios.tarea) pasarAEnCurso(cambios.tarea); return ok; });
+    return conManejo(backend.actualizar('cronometros/' + yoId, cambios)).then(ok => { if (ok) tareasDelCrono(cambios).forEach(pasarAEnCurso); return ok; });
   },
   async detener() {
     const yoId = yo();
@@ -110,13 +113,33 @@ const accionesHoras = {
     if (!ok) return false;
     if (minutos < 1) { avisar('El cronómetro corrió menos de un minuto, así que no se guardó.'); return true; }
     const largo = fin - new Date(c.inicio) > 24 * 3600e3;
-    const r = { ...c, miembro: yoId, fin: (largo ? new Date(new Date(c.inicio).getTime() + 24 * 3600e3) : fin).toISOString() };
+    const finReal = largo ? new Date(new Date(c.inicio).getTime() + 24 * 3600e3) : fin;
+    const tareas = tareasDelCrono(c);
+    if (tareas.length > 1) return accionesHoras.repartir(c, yoId, tareas, Math.round((finReal - new Date(c.inicio)) / 60000), minutos);
+    const r = { ...c, miembro: yoId, fin: finReal.toISOString() };
     const guardado = await accionesHoras.crear(r, { silencioso: true });
     if (guardado) {
       if (minutos > 12 * 60) avisar(`Guardaste ${duracionTexto(Math.min(minutos, 1440))}. Si el cronómetro quedó prendido sin querer, editá el registro.`, 'error');
       else avisar(`Guardaste ${duracionTexto(minutos)}.`);
     }
     return guardado;
+  },
+  // Varias tareas a la vez: el tiempo se reparte en partes iguales (tramos seguidos), así el total de horas no se duplica
+  async repartir(c, yoId, tareas, min, minutosTotal) {
+    const n = tareas.length;
+    if (min < n) { avisar(`Corrió ${duracionTexto(min)}: es muy poco para repartirlo entre ${n} tareas, así que no se guardó.`); return true; }
+    const base = Math.floor(min / n), resto = min % n, ini = new Date(c.inicio).getTime();
+    let acumulado = 0, guardadas = 0;
+    for (let i = 0; i < n; i++) {
+      const dur = base + (i < resto ? 1 : 0);
+      const r = { ...c, tarea: tareas[i], miembro: yoId, inicio: new Date(ini + acumulado * 60000).toISOString(), fin: new Date(ini + (acumulado + dur) * 60000).toISOString() };
+      acumulado += dur;
+      if (await accionesHoras.crear(r, { silencioso: true })) guardadas++;
+    }
+    if (guardadas === n) avisar(`Guardaste ${duracionTexto(min)}, repartidas en ${n} tareas (${resto ? 'cerca de ' : ''}${duracionTexto(base)} cada una).`);
+    else avisar(`Se guardaron ${guardadas} de ${n} registros. Revisá la lista y cargá los que falten.`, 'error');
+    if (minutosTotal > 12 * 60) avisar('Si el cronómetro quedó prendido sin querer, editá los registros.', 'error');
+    return guardadas > 0;
   },
   async descartar() {
     const yoId = yo();

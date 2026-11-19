@@ -23,6 +23,22 @@ function SelectoresRegistro({ ctx, valor, alCambiar, idBase }) {
     </select>`;
 }
 
+// Otras tareas en las que se trabaja a la vez (el tiempo se reparte entre todas al detener el cronómetro)
+function TareasExtra({ ctx, valor, alCambiar }) {
+  const extras = valor.tareasExtra || [];
+  const cambiar = lista => alCambiar({ tareasExtra: lista });
+  return html`<div class="crono-extra">
+    ${extras.map((id, i) => html`<span key=${i} class="fila">
+      <select class="entrada" aria-label=${'Otra tarea ' + (i + 1)} value=${id} onChange=${e => cambiar(extras.map((x, j) => (j === i ? e.target.value : x)).filter(Boolean))}>
+        <option value="">Elegí una tarea</option><${OpcionesTarea} ctx=${ctx} actual=${id} />
+      </select>
+      <button type="button" class="btn-icono chico" title="Quitar esta tarea" aria-label="Quitar esta tarea" onClick=${() => cambiar(extras.filter((_, j) => j !== i))}><${Icono} n="cerrar" t=${14} /></button>
+    </span>`)}
+    <button type="button" class="btn btn-fantasma btn-chico" onClick=${() => cambiar([...extras, ''])} data-tip="Sumá otra tarea en la que trabajás a la vez: al detener, el tiempo se reparte en partes iguales"><${Icono} n="mas" t=${13} />Otra tarea a la vez</button>
+    ${extras.length > 0 && html`<span class="tenue">Al detener, el tiempo se reparte en partes iguales entre las ${extras.length + 1} tareas.</span>`}
+  </div>`;
+}
+
 /* ----- Cronómetro y carga manual ----- */
 function BarraCronometro({ ctx, editable }) {
   const [modo, setModoS] = useState(() => (leer('finora-horas-modo') === 'manual' ? 'manual' : 'crono'));
@@ -43,7 +59,7 @@ function CronometroNuevo({ ctx }) {
   const [v, setV] = useState(() => { try { return JSON.parse(leer('finora-horas-ultimo') || '{}'); } catch (_) { return {}; } });
   const [desc, setDesc] = useState('');
   const iniciar = async () => {
-    const datos = { etapa: v.etapa, trabajo: v.trabajo, tarea: v.tarea, descripcion: desc };
+    const datos = { etapa: v.etapa, trabajo: v.trabajo, tarea: v.tarea, tareasExtra: (v.tareasExtra || []).filter(Boolean), descripcion: desc };
     guardar('finora-horas-ultimo', JSON.stringify({ etapa: v.etapa || null, trabajo: v.trabajo || null }));
     if (await accionesHoras.iniciar(datos)) setDesc('');
   };
@@ -53,6 +69,7 @@ function CronometroNuevo({ ctx }) {
     <${SelectoresRegistro} ctx=${ctx} valor=${v} idBase="crono" alCambiar=${c => setV(x => ({ ...x, ...c }))} />
     <span class="crono-tiempo mono" aria-hidden="true">0:00:00</span>
     <button class="btn btn-primario crono-boton" onClick=${iniciar}><${Icono} n="play" t=${15} />Iniciar</button>
+    <${TareasExtra} ctx=${ctx} valor=${v} alCambiar=${c => setV(x => ({ ...x, ...c }))} />
   </div>`;
 }
 function CronometroEnMarcha({ c, ctx }) {
@@ -64,6 +81,7 @@ function CronometroEnMarcha({ c, ctx }) {
     <${SelectoresRegistro} ctx=${ctx} valor=${c} idBase="crono" alCambiar=${cambios => accionesHoras.editarCronometro(cambios)} />
     <span class="crono-tiempo mono vivo" title=${'Desde las ' + horaDe(c.inicio)}>${cronoTexto(Date.now() - new Date(c.inicio))}</span>
     <button class="btn btn-detener crono-boton" onClick=${() => accionesHoras.detener()}><${Icono} n="stop" t=${14} />Detener</button>
+    <${TareasExtra} ctx=${ctx} valor=${c} alCambiar=${cambios => accionesHoras.editarCronometro(cambios)} />
     ${confirmar
       ? html`<span class="fila crono-descartar"><button class="btn btn-peligro btn-chico" onClick=${() => accionesHoras.descartar()}>Descartar sin guardar</button><button class="btn btn-fantasma btn-chico" onClick=${() => setConfirmar(false)}>Cancelar</button></span>`
       : html`<button class="btn-icono crono-descartar" title="Descartar sin guardar" aria-label="Descartar sin guardar" onClick=${() => setConfirmar(true)}><${Icono} n="basura" t=${15} /></button>`}
@@ -456,7 +474,7 @@ function TrabajandoAhora({ ctx, alAbrir }) {
 }
 function HorasDeTarea({ t, ctx, editable }) {
   const c = ctx.yo ? ctx.cronometros.get(ctx.yo) : null;
-  const enEsta = !!(c && c.tarea === t.id);
+  const enEsta = !!(c && tareasDelCrono(c).includes(t.id));
   useReloj(enEsta);
   const total = ctx.horasPorTarea.get(t.id) || 0;
   const porPersona = new Map();
