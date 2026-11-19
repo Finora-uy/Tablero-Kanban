@@ -68,6 +68,9 @@ function BarraFiltros({ ctx, filtros, setFiltros, vista, carril, setCarril, edit
           <button class="menu-item" onClick=${() => { set({ hito: 'sin' }); cerrar(); }}>Sin hito</button>
           ${ctx.hitos.map(x => html`<button key=${x.id} class="menu-item" onClick=${() => { set({ hito: x.id }); cerrar(); }}><${Icono} n="bandera" />${x.nombre}</button>`)}`}
       <//>
+      ${toggle('nuevas', 'Recién creadas')}
+      ${toggle('porVencer', 'Por vencer')}
+      ${toggle('urgentes', 'Urgentes')}
       ${toggle('vencidas', 'Vencidas')}
       ${toggle('bloqueadas', 'Bloqueadas')}
       ${toggle('archivadas', 'Archivadas')}

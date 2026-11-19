@@ -392,6 +392,11 @@ const hechaVieja = (t, ctx, ahora = Date.now(), dias = HECHAS_DIAS_VISIBLES) => 
 };
 const dependenciasPendientes = (t, ctx) => (t.dependeDe || []).map(id => ctx.porId.get(id)).filter(d => d && !d.archivada && !esHecha(d, ctx));
 const estaBloqueada = (t, ctx) => !!t.bloqueada || dependenciasPendientes(t, ctx).length > 0;
+// Filtros rápidos del tablero: recién creadas (últimos 3 días), por vencer (hoy o en los próximos 7 días) y urgentes (prioridad urgente o alta)
+const DIAS_NUEVA = 3, DIAS_POR_VENCER = 7;
+const esNueva = t => !!t.creadaEn && Date.now() - new Date(t.creadaEn).getTime() < DIAS_NUEVA * 864e5;
+const estaPorVencer = (t, ctx) => { if (!t.vence || t.archivada || esHecha(t, ctx)) return false; const d = diasEntre(ctx.hoy, t.vence); return d >= 0 && d <= DIAS_POR_VENCER; };
+const esUrgente = (t, ctx) => !t.archivada && !esHecha(t, ctx) && (t.prioridad === 'urgente' || t.prioridad === 'alta');
 const estaVencida = (t, ctx) => !!t.vence && !esHecha(t, ctx) && !t.archivada && diasEntre(ctx.hoy, t.vence) < 0;
 const nombreDe = (id, ctx) => { const m = ctx.integrantes.get(id); return m ? m.nombre : 'Ex integrante'; };
 const ordenar = lista => lista.sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0) || (a.numero ?? 0) - (b.numero ?? 0));
@@ -410,11 +415,14 @@ function filtrar(tareas, f, ctx) {
     if (f.mias && !(ctx.yo && (t.asignados || []).includes(ctx.yo))) return false;
     if (f.vencidas && !estaVencida(t, ctx)) return false;
     if (f.bloqueadas && !estaBloqueada(t, ctx)) return false;
+    if (f.nuevas && !esNueva(t)) return false;
+    if (f.porVencer && !estaPorVencer(t, ctx)) return false;
+    if (f.urgentes && !esUrgente(t, ctx)) return false;
     return true;
   });
 }
-const FILTROS_VACIOS = { q: '', integrantes: [], estados: [], etiquetas: [], prioridades: [], tipos: [], hito: '', mias: false, vencidas: false, bloqueadas: false, archivadas: false };
+const FILTROS_VACIOS = { q: '', integrantes: [], estados: [], etiquetas: [], prioridades: [], tipos: [], hito: '', mias: false, vencidas: false, bloqueadas: false, nuevas: false, porVencer: false, urgentes: false, archivadas: false };
 function cargarFiltros() {
   try { return { ...FILTROS_VACIOS, ...JSON.parse(leer('finora-filtros') || '{}'), q: '' }; } catch (_) { return { ...FILTROS_VACIOS }; }
 }
-const cuantosFiltros = f => f.integrantes.length + f.estados.length + f.etiquetas.length + f.prioridades.length + f.tipos.length + (f.hito ? 1 : 0) + (f.mias ? 1 : 0) + (f.vencidas ? 1 : 0) + (f.bloqueadas ? 1 : 0) + (f.archivadas ? 1 : 0);
+const cuantosFiltros = f => f.integrantes.length + f.estados.length + f.etiquetas.length + f.prioridades.length + f.tipos.length + (f.hito ? 1 : 0) + (f.mias ? 1 : 0) + (f.vencidas ? 1 : 0) + (f.bloqueadas ? 1 : 0) + (f.nuevas ? 1 : 0) + (f.porVencer ? 1 : 0) + (f.urgentes ? 1 : 0) + (f.archivadas ? 1 : 0);
