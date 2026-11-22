@@ -66,12 +66,18 @@ const acciones = {
       avisar(`Para crear una tarea directo en ${enCursoCol.nombre} tiene que tener estimación en puntos. Elegí la estimación o creala en otra columna.`, 'error');
       return null;
     }
+    if (columna === 'listo') {
+      avisar('Una tarea nueva no puede crearse en Listo: primero tiene que cumplir la Definition of Ready. Creala en otra columna y pasala a Listo desde el detalle.', 'error');
+      return null;
+    }
     const enCol = tareasDeColumna(columna);
     const orden = enCol.length ? enCol[enCol.length - 1].orden + 1024 : 1024;
     const ahora = ahoraISO();
     const t = {
       numero, titulo: c.titulo.trim(), descripcion: c.descripcion || '', tipo: c.tipo || 'tarea', columna, orden,
-      asignados: c.asignados || [], etiquetas: c.etiquetas || [], prioridad: c.prioridad || 'media',
+      // Las etiquetas Sprint no se heredan ni se crean sueltas: exigen DoR (ver asignarSprint)
+      asignados: c.asignados || [], etiquetas: (c.etiquetas || []).filter(x => !ES_ID_SPRINT.test(x)), prioridad: c.prioridad || 'media',
+      moscow: c.moscow || null, rf: c.rf || '', demo: c.demo || '', spike: c.spike || null, bug: c.bug || null,
       vence: c.vence || null, faseRoadmap: c.faseRoadmap || null, estimacion: c.estimacion != null && c.estimacion !== '' ? Number(c.estimacion) : null, hito: c.hito || null,
       subtareas: c.subtareas || [], criterios: c.criterios || [], enlaces: c.enlaces || [], dependeDe: [],
       bloqueada: false, motivoBloqueo: '', creadaPor: yo(), creadaEn: ahora, actualizadaEn: ahora, entroEnColumna: ahora,
@@ -84,6 +90,11 @@ const acciones = {
   actualizarTarea(id, cambios, que) {
     const t = estado.tareas.get(id);
     if (!t) return Promise.resolve(false);
+    // Regla de la DoR: la etiqueta Sprint solo se pone (o saca) desde Scrum, con permiso y con la tarea lista
+    if (cambios.etiquetas) {
+      const motivo = motivoSprintBloqueado({ ...t, id }, cambios.etiquetas);
+      if (motivo) { avisar(motivo, 'error'); notificar(); return Promise.resolve(false); }
+    }
     const ahora = ahoraISO();
     const data = { ...cambios, actualizadaEn: ahora };
     if (que) data.historial = [...(t.historial || []), { en: ahora, quien: yo(), que }].slice(-40);
@@ -125,6 +136,14 @@ const acciones = {
         notificar(); // vuelve a dibujar el selector de estado en su valor real
         return Promise.resolve(false);
       }
+      // Pasar a Listo es decisión del Product Owner y exige cumplir la DoR; al salir hacia atrás se pierde el «Listo»
+      if (colId === 'listo') {
+        const motivo = motivoListoBloqueado({ ...t, id });
+        if (motivo) { avisar(motivo, 'error'); notificar(); return Promise.resolve(false); }
+        cambios.dorOk = { por: yo(), en: ahoraISO() };
+        extra.__que = extra.__que || 'la marcó como Listo: cumple la Definition of Ready';
+        que = extra.__que;
+      } else if (t.columna === 'listo' && indiceColumna(colId) < indiceColumna('listo')) cambios.dorOk = null;
       // Cada vez que cambia a otra columna que no es la final, los OK empiezan de cero
       if (!esFinal(colId) && (t.aprobaciones || []).length) cambios.aprobaciones = [];
       const ahora = ahoraISO();
@@ -155,7 +174,7 @@ const acciones = {
     const t = tareaPorId(id);
     if (!t) return null;
     const r = await acciones.crearTarea({
-      ...t, titulo: t.titulo + ' (copia)', que: `la duplicó de ${estado.config?.prefijo || 'FIN'}-${t.numero}`,
+      ...t, columna: t.columna === 'listo' ? null : t.columna, titulo: t.titulo + ' (copia)', que: `la duplicó de ${estado.config?.prefijo || 'FIN'}-${t.numero}`,
       subtareas: (t.subtareas || []).map(x => ({ ...x, hecho: false })), criterios: (t.criterios || []).map(x => ({ ...x, hecho: false })),
     });
     if (r) avisar(`Creaste la copia ${(estado.config || CONFIG_BASE).prefijo}-${r.numero}.`);
@@ -232,18 +251,19 @@ function respaldoJSON() {
     app: 'tablero-finora', version: 1, exportado: ahoraISO(), config: estado.config || CONFIG_BASE,
     integrantes: obj(estado.integrantes), tareas: obj(estado.tareas), comentarios: obj(estado.comentarios), hitos: obj(estado.hitos),
     horas: obj(estado.horas), disponibilidad: obj(estado.disponibilidad), ausencias: obj(estado.ausencias), fechas: obj(estado.fechas),
-    roadmap: obj(estado.roadmap), roadmapFases: obj(estado.roadmapFases), roadmapItems: obj(estado.roadmapItems), roadmapPeriodos: obj(estado.roadmapPeriodos),
+    roadmap: obj(estado.roadmap), roadmapFases: obj(estado.roadmapFases), roadmapItems: obj(estado.roadmapItems), roadmapPeriodos: obj(estado.roadmapPeriodos), sprints: obj(estado.sprints),
   }, null, 2);
 }
 function tareasCSV(ctx) {
   const esc = v => { const s = v == null ? '' : String(v); return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const filas = [['Código', 'Título', 'Estado', 'Tipo', 'Prioridad', 'Responsables', 'Etiquetas', 'Vence', 'Puntos', 'Hito', 'Fase del roadmap', 'Bloqueada', 'Archivada', 'Creada', 'Terminada', 'Descripción']];
+  const filas = [['Código', 'Título', 'Estado', 'Tipo', 'Prioridad', 'Responsables', 'Etiquetas', 'Vence', 'Puntos', 'Hito', 'Fase del roadmap', 'MoSCoW', 'Sprint', 'Bloqueada', 'Archivada', 'Creada', 'Terminada', 'Descripción']];
   const lista = [...ctx.tareas].sort((a, b) => (a.numero || 0) - (b.numero || 0));
   for (const t of lista) {
     filas.push([
       codigo(t, ctx), t.titulo, ctx.colPorId.get(t.columna)?.nombre || '', TIPO[t.tipo]?.nombre || '', PRIORIDAD[t.prioridad]?.nombre || '',
       (t.asignados || []).map(id => nombreDe(id, ctx)).join(', '), (t.etiquetas || []).map(id => ctx.etiquetasPorId.get(id)?.nombre).filter(Boolean).join(', '),
       t.vence ? fechaNum(t.vence) : '', t.estimacion ?? '', t.hito ? ctx.hitosPorId.get(t.hito)?.nombre || '' : '', t.faseRoadmap ? ctx.fasesRoadmapPorId.get(t.faseRoadmap)?.nombre || '' : '',
+      MOSCOW_POR_ID[t.moscow]?.nombre || '', sprintDe(t, ctx)?.nombre || '',
       estaBloqueada(t, ctx) ? 'Sí' : 'No', t.archivada ? 'Sí' : 'No', t.creadaEn ? fechaNum(isoDe(new Date(t.creadaEn))) : '',
       t.terminadaEn ? fechaNum(isoDe(new Date(t.terminadaEn))) : '', t.descripcion || '',
     ]);
@@ -271,7 +291,7 @@ function validarRespaldo(datos) {
   if (!datos || datos.app !== 'tablero-finora') throw new Error('El archivo no es un respaldo del Tablero Finora.');
   const ops = [];
   if (datos.config && Array.isArray(datos.config.columnas)) ops.push(['tablero/config', datos.config]);
-  for (const col of ['integrantes', 'hitos', 'tareas', 'comentarios', 'horas', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos']) {
+  for (const col of ['integrantes', 'hitos', 'tareas', 'comentarios', 'horas', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos', 'sprints']) {
     for (const [id, d] of Object.entries(datos[col] || {})) {
       if (ID_VALIDO.test(id) && d && typeof d === 'object' && !Array.isArray(d)) ops.push([`${col}/${id}`, d]);
     }
@@ -286,7 +306,7 @@ async function importarRespaldo(ops, alProgresar) {
 }
 
 /* ===== Arranque: suscripciones y capacidades ===== */
-const COLECCIONES = ['config', 'notas', 'integrantes', 'tareas', 'comentarios', 'hitos', 'horas', 'cronometros', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos'];
+const COLECCIONES = ['config', 'sprints', 'notas', 'integrantes', 'tareas', 'comentarios', 'hitos', 'horas', 'cronometros', 'disponibilidad', 'ausencias', 'fechas', 'roadmap', 'roadmapFases', 'roadmapItems', 'roadmapPeriodos'];
 const subs = {};
 function abrirSuscripcion(nombre) {
   if (subs[nombre]) { try { subs[nombre](); } catch (_) {} }
@@ -297,7 +317,7 @@ function abrirSuscripcion(nombre) {
   };
   if (nombre === 'config') {
     subs.config = backend.observarDoc('tablero/config', d => {
-      estado.config = d && Array.isArray(d.columnas) && d.columnas.length ? d : null;
+      estado.config = d && Array.isArray(d.columnas) && d.columnas.length ? asegurarListo(d) : null;
       estado.cargado.config = true; notificar();
     }, alError);
   } else {

@@ -9,6 +9,7 @@ const CAMPOS_LISTA = [
   { id: 'asignados', nombre: 'Responsables', valor: (t, ctx) => normalizar((t.asignados || []).map(id => nombreDe(id, ctx)).join(' ')) || '~' },
   { id: 'vence', nombre: 'Vence', valor: t => t.vence || '9999' },
   { id: 'estimacion', nombre: 'Pts', valor: t => t.estimacion ?? -1 },
+  { id: 'moscow', nombre: 'MoSCoW', valor: t => (MOSCOW_POR_ID[t.moscow] ? MOSCOW_POR_ID[t.moscow].orden : 9) },
   { id: 'hito', nombre: 'Hito', valor: (t, ctx) => (t.hito && ctx.hitosPorId.get(t.hito)?.fin) || '9999' },
   { id: 'fase', nombre: 'Fase', valor: (t, ctx) => { const i = ctx.fasesRoadmap.findIndex(f => f.id === t.faseRoadmap); return i < 0 ? 999 : i; } },
 ];
@@ -38,6 +39,7 @@ function VistaLista({ ctx, tareas, alAbrir, hayFiltros, alLimpiar }) {
           <td>${(t.asignados || []).length ? html`<span class="fila" style="gap:6px;flex-wrap:nowrap"><${Avatares} ids=${t.asignados} ctx=${ctx} /><span>${t.asignados.map(id => nombreDe(id, ctx)).join(', ')}</span></span>` : html`<span class="tenue">—</span>`}</td>
           <td class=${'num t-dato ' + (t.vence && !hecha ? estadoVence(t.vence, ctx.hoy) : '')} title=${t.vence && !hecha ? cuandoVence(t.vence, ctx.hoy) : ''}>${t.vence ? fechaNum(t.vence) : '—'}</td>
           <td class="num">${t.estimacion ?? '—'}</td>
+          <td>${MOSCOW_POR_ID[t.moscow] ? MOSCOW_POR_ID[t.moscow].nombre : html`<span class="tenue">—</span>`}</td>
           <td>${hito ? hito.nombre : html`<span class="tenue">—</span>`}</td>
           <td>${fase ? fase.corto : html`<span class="tenue">—</span>`}</td>
           <td><div class="t-etiquetas">${(t.etiquetas || []).map(id => ctx.etiquetasPorId.get(id)).filter(Boolean).map(x => html`<${Etiqueta} key=${x.id} x=${x} />`)}</div></td>

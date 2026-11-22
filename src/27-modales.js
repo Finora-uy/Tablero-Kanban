@@ -25,7 +25,7 @@ function ModalNueva({ ctx, inicial = {}, alCerrar, alAbrir }) {
         onInput=${e => set('titulo', e.target.value)} onKeyDown=${e => { if (e.key === 'Enter') { e.preventDefault(); crear(false); } }} /></div>
     <div class="grilla-2">
       <div class="campo"><label for="nt-tipo">Tipo</label><select class="entrada" id="nt-tipo" value=${f.tipo} onChange=${e => set('tipo', e.target.value)}>${TIPOS.map(x => html`<option value=${x.id}>${x.nombre}</option>`)}</select></div>
-      <div class="campo"><label for="nt-col">Columna</label><select class="entrada" id="nt-col" value=${f.columna} onChange=${e => set('columna', e.target.value)}>${ctx.columnas.map(c => html`<option value=${c.id}>${c.nombre}</option>`)}</select></div>
+      <div class="campo"><label for="nt-col">Columna</label><select class="entrada" id="nt-col" value=${f.columna} onChange=${e => set('columna', e.target.value)}>${ctx.columnas.filter(c => c.id !== 'listo').map(c => html`<option value=${c.id}>${c.nombre}</option>`)}</select></div>
       <div class="campo"><label for="nt-prio">Prioridad</label><select class="entrada" id="nt-prio" value=${f.prioridad} onChange=${e => set('prioridad', e.target.value)}>${PRIORIDADES.map(p => html`<option value=${p.id}>${p.nombre}</option>`)}</select></div>
       <div class="campo"><label for="nt-vence">Vence</label><input class="entrada" id="nt-vence" type="date" value=${f.vence} onChange=${e => set('vence', e.target.value)} /></div>
       <div class="campo"><label for="nt-est">Estimación</label><select class="entrada" id="nt-est" value=${f.estimacion} onChange=${e => set('estimacion', e.target.value)}><option value="">Sin estimar</option>${ESTIMACIONES.map(n => html`<option value=${String(n)}>${n} ${n === 1 ? 'punto' : 'puntos'}</option>`)}</select></div>
@@ -133,7 +133,7 @@ function ModalHito({ ctx, id, alCerrar }) {
 function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
   const [sec, setSec] = useState(seccionInicial);
   // Las etapas y trabajos pueden no estar guardados todavía: se parte de lo que se ve en pantalla
-  const [inicial] = useState(() => JSON.stringify({ ...ctx.config, etapas: ctx.etapas, trabajos: ctx.trabajos.filter(x => !x.legado) }));
+  const [inicial] = useState(() => JSON.stringify({ ...ctx.config, etapas: ctx.etapas.filter(x => !x.sprint), trabajos: ctx.trabajos.filter(x => !x.legado) }));
   const [cfg, setCfg] = useState(() => JSON.parse(inicial));
   const [guardando, setGuardando] = useState(false);
   const cambiado = JSON.stringify(cfg) !== inicial;
@@ -169,7 +169,7 @@ function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
         <span class="fila" style="gap:2px;flex-wrap:nowrap">
           <button class="btn-icono chico" aria-label="Mover a la izquierda" title="Mover a la izquierda" disabled=${i === 0} onClick=${() => moverCol(i, -1)}><${Icono} n="izq" t=${14} /></button>
           <button class="btn-icono chico" aria-label="Mover a la derecha" title="Mover a la derecha" disabled=${i === cfg.columnas.length - 1} onClick=${() => moverCol(i, 1)}><${Icono} n="der" t=${14} /></button>
-          <button class="btn-icono chico" aria-label=${'Borrar ' + c.nombre} disabled=${cfg.columnas.length <= 1}
+          <button class="btn-icono chico" aria-label=${'Borrar ' + c.nombre} disabled=${cfg.columnas.length <= 1 || !!c.fijo} title=${c.fijo ? 'Esta columna es parte del flujo Scrum: se puede renombrar, no borrar' : undefined}
             onClick=${() => { const n = cuantas(c.id); if (n) { avisar(`${c.nombre} tiene ${n} tarea${n === 1 ? '' : 's'}. Movelas o eliminalas antes de borrar la columna.`, 'error'); return; } setCfg(s => ({ ...s, columnas: s.columnas.filter((_, j) => j !== i) })); }}><${Icono} n="basura" t=${14} /></button>
         </span>
       </div>`)}

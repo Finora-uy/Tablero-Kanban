@@ -92,14 +92,37 @@ const ROLES_PROYECTO = [
   { nombre: 'Ingeniería de requerimientos', clave: 'requerimientos' },
   { nombre: 'SQA', clave: 'sqa' },
   { nombre: 'SCM', clave: 'scm' },
+  { nombre: 'Scrum Master', clave: 'scrum master' },
+  { nombre: 'Product Owner', clave: 'product owner' },
 ];
 const ROLES = ROLES_PROYECTO.map(r => r.nombre);
 const ESTIMACIONES = [1, 2, 3, 5, 8, 13];
 const VISTAS = [
   { id: 'tablero', nombre: 'Tablero' }, { id: 'lista', nombre: 'Lista' }, { id: 'calendario', nombre: 'Calendario' },
   { id: 'hitos', nombre: 'Hitos' }, { id: 'roadmap', nombre: 'Roadmap' }, { id: 'resumen', nombre: 'Resumen' }, { id: 'equipo', nombre: 'Equipo' },
-  { id: 'horas', nombre: 'Horas' }, { id: 'disponibilidad', nombre: 'Disponibilidad' }, { id: 'lider', nombre: 'Panel de Líder' }, { id: 'actividad', nombre: 'Actividad' },
+  { id: 'horas', nombre: 'Horas' }, { id: 'disponibilidad', nombre: 'Disponibilidad' }, { id: 'lider', nombre: 'Panel de Líder' }, { id: 'scrum', nombre: 'Scrum' }, { id: 'actividad', nombre: 'Actividad' },
 ];
+// Prioridad de las cards en Scrum (MoSCoW)
+const MOSCOW = [
+  { id: 'must', nombre: 'Must', desc: 'Imprescindible' }, { id: 'should', nombre: 'Should', desc: 'Importante' },
+  { id: 'could', nombre: 'Could', desc: 'Deseable' }, { id: 'wont', nombre: "Won't", desc: 'Fuera de este alcance' },
+];
+const MOSCOW_POR_ID = Object.fromEntries(MOSCOW.map((m, i) => [m.id, { ...m, orden: i }]));
+// Calendario Scrum: del 13/12 al 14/02. Los sprints arrancan el lunes 14/12 y van uno a continuación del otro.
+const SCRUM = { desde: '2026-12-13', hasta: '2027-02-14', inicio: '2026-12-14' };
+const SPRINT_COLORES = ['azul', 'verde', 'violeta', 'mostaza', 'petroleo', 'magenta', 'naranja', 'pizarra'];
+const ES_ID_SPRINT = /^sprint-\d+$/;
+const sumarDias = (iso, n) => { const d = aFecha(iso); d.setDate(d.getDate() + n); return isoDe(d); };
+function armarSprints(mapa) {
+  const lista = [...mapa].map(([id, s]) => ({ ...s, id })).filter(s => s.numero > 0).sort((a, b) => a.numero - b.numero);
+  let cursor = SCRUM.inicio;
+  return lista.map(s => {
+    const semanas = Math.min(4, Math.max(1, Number(s.semanas) || 2));
+    const inicio = cursor, fin = sumarDias(inicio, semanas * 7 - 1);
+    cursor = sumarDias(fin, 1);
+    return { ...s, semanas, inicio, fin, nombre: `Sprint ${s.numero}`, color: SPRINT_COLORES[(s.numero - 1) % SPRINT_COLORES.length], fuera: fin > SCRUM.hasta };
+  });
+}
 const CARRILES = [
   { id: 'ninguno', nombre: 'Sin carriles' }, { id: 'integrante', nombre: 'Por integrante' }, { id: 'prioridad', nombre: 'Por prioridad' },
 ];
@@ -109,6 +132,7 @@ const CONFIG_BASE = {
   columnas: [
     { id: 'ideas', nombre: 'Ideas', limiteWip: 0 },
     { id: 'por-hacer', nombre: 'Por hacer', limiteWip: 0 },
+    { id: 'listo', nombre: 'Listo', limiteWip: 0, fijo: true },
     { id: 'en-curso', nombre: 'En curso', limiteWip: 4 },
     { id: 'revision', nombre: 'En revisión', limiteWip: 3 },
     { id: 'hecho', nombre: 'Hecho', limiteWip: 0, final: true },
@@ -167,6 +191,15 @@ function armarEtapas(guardados) {
   const base = guardados.filter(x => !ETAPAS_FIJAS.some(f => f.id === x.id));
   return [...base, ...ETAPAS_FIJAS.map(f => ({ ...f, ...(guardados.find(x => x.id === f.id) || {}), fijo: true }))];
 }
+// La columna «Listo» (la tarea cumple la DoR) está siempre, aunque la config guardada sea anterior: va antes de «En curso»
+function asegurarListo(cfg) {
+  if (!cfg || !Array.isArray(cfg.columnas) || cfg.columnas.some(c => c.id === 'listo')) return cfg;
+  const cols = [...cfg.columnas];
+  const fin = cols.findIndex(c => c.final), f = fin >= 0 ? fin : cols.length - 1;
+  const en = cols.findIndex(c => c.id === 'en-curso');
+  cols.splice(en >= 0 ? en : Math.max(1, f - 2), 0, { id: 'listo', nombre: 'Listo', limiteWip: 0, fijo: true });
+  return { ...cfg, columnas: cols };
+}
 const SESION = uid();
 const ID_VALIDO = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
 
@@ -176,8 +209,8 @@ const estado = {
   config: null,
   integrantes: new Map(), tareas: new Map(), comentarios: new Map(), hitos: new Map(),
   horas: new Map(), cronometros: new Map(), disponibilidad: new Map(), ausencias: new Map(), fechas: new Map(),
-  roadmap: new Map(), roadmapFases: new Map(), roadmapItems: new Map(), roadmapPeriodos: new Map(), notas: new Map(),
-  cargado: { notas: false, config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false, roadmap: false, roadmapFases: false, roadmapItems: false, roadmapPeriodos: false },
+  roadmap: new Map(), roadmapFases: new Map(), roadmapItems: new Map(), roadmapPeriodos: new Map(), notas: new Map(), sprints: new Map(),
+  cargado: { sprints: false, notas: false, config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false, roadmap: false, roadmapFases: false, roadmapItems: false, roadmapPeriodos: false },
   puedeEscribir: null, userId: null, yoId: leer('finora-yo'),
   pares: [], room: null, descargas: null,
   errorConexion: false, avisos: [],
@@ -354,7 +387,11 @@ function armarContexto(e) {
   }
   enLinea.sort((a, b) => (b.esYo ? 1 : 0) - (a.esYo ? 1 : 0));
   // Horas: si la config guardada es anterior a esta sección, se usan las listas por defecto
-  const etapas = armarEtapas(config.etapas);
+  // Sprints: cada uno trae su etiqueta y su etapa (mismo id), sin guardarlas en la config
+  const sprints = armarSprints(e.sprints);
+  const etapasBase = armarEtapas(config.etapas);
+  const etapas = [...etapasBase.filter(x => !x.fijo), ...sprints.map(s => ({ id: s.id, nombre: s.nombre, color: s.color, sprint: true })), ...etapasBase.filter(x => x.fijo)];
+  const etiquetasTodas = [...(config.etiquetas || []), ...sprints.map(s => ({ id: s.id, nombre: s.nombre, color: s.color, sprint: true }))];
   const trabajos = armarTrabajos(config.trabajos, e.horas);
   const horas = [...e.horas].map(([id, r]) => ({ ...r, id })).filter(r => r.inicio && r.fin && r.miembro);
   const horasPorTarea = new Map();
@@ -375,11 +412,13 @@ function armarContexto(e) {
     },
     fechas: [...e.fechas].map(([id, x]) => ({ ...x, id })).filter(x => x.fecha).sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || ''))),
     config, columnas, finalId: finalCol && finalCol.id, colPorId: new Map(columnas.map(c => [c.id, c])),
-    etiquetas: config.etiquetas || [], etiquetasPorId: new Map((config.etiquetas || []).map(x => [x.id, x])),
+    sprints, sprintsPorId: new Map(sprints.map(s => [s.id, s])),
+    etiquetas: etiquetasTodas, etiquetasPorId: new Map(etiquetasTodas.map(x => [x.id, x])),
     prefijo: config.prefijo || 'FIN', tareas, porId, miembros, integrantes, hitos, hitosPorId: new Map(hitos.map(x => [x.id, x])),
     comentarios, comentariosPorTarea, yo, hoy: hoyISO(), miradas, enLinea,
   };
 }
+const sprintDe = (t, ctx) => ctx.sprints.find(s => (t.etiquetas || []).includes(s.id)) || null;
 const codigo = (t, ctx) => `${ctx.prefijo}-${t.numero != null ? t.numero : '?'}`;
 const estadoVence = (vence, hoy) => { const n = diasEntre(hoy, vence); return n < 0 ? 'vencida' : n <= 2 ? 'pronto' : 'normal'; };
 const esHecha = (t, ctx) => t.columna === ctx.finalId;

@@ -215,6 +215,8 @@ function App() {
     cuerpo = html`<${VistaRoadmap} ctx=${ctx} editable=${editable} alModal=${setModal} />`;
   } else if (vista === 'disponibilidad') {
     cuerpo = html`<${VistaDisponibilidad} ctx=${ctx} editable=${editable} />`;
+  } else if (vista === 'scrum') {
+    cuerpo = html`<${VistaScrum} ctx=${ctx} e=${e} editable=${editable} alAbrir=${setAbierta} alFiltrar=${filtrarPor} />`;
   } else if (vista === 'lider') {
     cuerpo = html`<${PanelLider} ctx=${ctx} alAbrir=${setAbierta} />`;
   } else if (vista === 'horas') {

@@ -92,6 +92,8 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
           ${ESTIMACIONES.map(n => html`<option value=${String(n)}>${n} ${n === 1 ? 'punto' : 'puntos'}</option>`)}
         </select>
 
+        <${FilasScrum} t=${t} ctx=${ctx} editable=${editable} act=${act} />
+
         <label class="prop-etq" for="det-hito">Hito</label>
         <select class="entrada" id="det-hito" value=${t.hito || ''} disabled=${!editable}
           onChange=${e => { const v = e.target.value || null; act({ hito: v }, v ? `la sumó al hito ${ctx.hitosPorId.get(v)?.nombre || ''}` : 'la sacó del hito'); }}>
@@ -115,6 +117,7 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
       </div>
 
       <${RevisionOk} t=${t} ctx=${ctx} editable=${editable} />
+      <${SeccionDoR} t=${t} ctx=${ctx} editable=${editable} act=${act} />
 
       <section class="seccion">
         <div class="seccion-cab"><h3>Descripción</h3></div>

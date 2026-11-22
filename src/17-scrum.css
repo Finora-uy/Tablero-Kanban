@@ -1,0 +1,97 @@
+/* ===== Scrum: calendario de sprints, planificación y Definition of Ready ===== */
+.sc-roles { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13.5px; }
+.sc-roles strong { font-weight: 600; }
+
+/* Calendario */
+.sc-cal-env { overflow-x: auto; border-radius: 12px; }
+.sc-cal { display: grid; grid-template-columns: repeat(7, minmax(98px, 1fr)); min-width: 700px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--line); gap: 1px; }
+.sc-dia { --sp: transparent; position: relative; background: var(--card); min-height: 92px; padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sc-dia.en-sprint { background: color-mix(in srgb, var(--sp) 13%, var(--card)); box-shadow: inset 0 3px 0 var(--sp); }
+.sc-dia.finde:not(.en-sprint) { background: var(--col); }
+.sc-dia.margen { background: repeating-linear-gradient(135deg, var(--card), var(--card) 8px, var(--col) 8px, var(--col) 16px); }
+.sc-dia.fuera { background: var(--col); opacity: .55; }
+.sc-num { display: flex; align-items: center; gap: 6px; font: 500 12px/1 var(--f-mono); color: var(--text-2); }
+.sc-num > span:first-child { padding: 4px; border-radius: 6px; }
+.sc-dia.hoy .sc-num > span:first-child { background: var(--text); color: var(--bg); }
+.sc-mes { text-transform: uppercase; font-size: 10.5px; color: var(--text-3); }
+.sc-feriado { font-size: 10.5px; color: var(--red-text); }
+.sc-tag-sprint { align-self: flex-start; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--sp); color: #07132F; }
+.sc-tag-margen { align-self: flex-start; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--card-2); color: var(--text-2); border: 1px dashed var(--line-2); }
+.sc-cer { display: inline-block; align-self: flex-start; font-size: 11.5px; font-weight: 600; line-height: 1.25; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line-2); background: var(--card); color: var(--text); }
+.sc-cer.planning { border-color: var(--focus); background: var(--blue-tint); }
+.sc-cer.ref2 { border-color: var(--amber); background: var(--amber-tint); }
+.sc-cer.revision { border-color: var(--green); background: var(--green-tint); }
+.sc-hito, .sc-fecha { display: flex; align-items: center; gap: 4px; font-size: 11.5px; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
+.sc-fecha { color: var(--amber-text); font-weight: 600; }
+.sc-aus { font-size: 11px; color: var(--red-text); }
+.sc-leyenda { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 12.5px; color: var(--text-2); }
+.sc-ley { display: inline-flex; align-items: center; gap: 6px; }
+.sc-ley > i { width: 12px; height: 12px; border-radius: 3px; background: var(--sp, var(--text-2)); }
+.sc-ley > .ideal-muestra { background: none; border-top: 2px dashed var(--text-3); height: 0; width: 18px; border-radius: 0; }
+
+/* Resumen por sprint */
+.sc-sprints { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.sc-sprint { --sp: var(--c-azul); display: grid; gap: 8px; align-content: start; padding: 12px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--sp); }
+.sc-sprint.elegido { border-color: var(--sp); box-shadow: 0 0 0 1px var(--sp); }
+.sc-sprint header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sc-sprint h4 { font: 600 16px/1.2 var(--f-titulo); letter-spacing: -.01em; }
+.sc-sprint h4 .btn-link { font: inherit; color: var(--text); }
+.sc-fechas { font-size: 12.5px; color: var(--text-2); }
+.sc-objetivo { font-size: 13.5px; }
+.sc-sprint textarea { min-height: 52px; font-size: 13px; }
+.sc-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 0; }
+.sc-datos div { display: grid; gap: 1px; }
+.sc-datos dt { font-size: 11.5px; color: var(--text-2); }
+.sc-datos dd { margin: 0; font: 500 13px/1.3 var(--f-mono); }
+.sc-alerta { color: var(--amber-text); }
+
+/* Planificación */
+.sc-plan { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .sc-plan { grid-template-columns: minmax(0, 1fr); } }
+.sc-cols { display: grid; gap: 12px; }
+.sc-col { display: grid; gap: 8px; align-content: start; padding: 12px; border-radius: 12px; background: var(--col); border: 1px solid var(--line); }
+.sc-col h4 { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.sc-col h4 .derecha { margin-left: auto; }
+.sc-col h4 i { width: 10px; height: 10px; border-radius: 3px; background: var(--sp); }
+.sc-destino { --sp: var(--c-azul); border-top: 4px solid var(--sp); }
+.sc-destino.sobre { background: color-mix(in srgb, var(--sp) 14%, var(--col)); border-color: var(--sp); }
+.sc-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sc-fila { display: grid; gap: 6px; padding: 8px 10px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); cursor: grab; }
+.sc-fila.rota { border-color: var(--red); background: var(--red-tint); }
+.sc-fila-titulo { display: flex; gap: 6px; align-items: baseline; text-align: left; background: none; border: 0; padding: 0; color: var(--text); cursor: pointer; font-size: 13.5px; line-height: 1.3; }
+.sc-fila-titulo:hover { text-decoration: underline; }
+.sc-fila-titulo .mono { color: var(--text-2); font-size: 11.5px; flex: none; }
+.sc-fila-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.sc-asignar { width: auto; min-height: 26px; height: 26px; padding: 0 6px; font-size: 12.5px; margin-left: auto; }
+.t-moscow { color: var(--text); }
+.t-excepcion { color: var(--amber-text); }
+.t-excepcion.vencida { color: var(--red-text); }
+.sin-estimar { color: var(--amber-text); }
+
+/* Burndown */
+.sc-burn-env { overflow-x: auto; }
+.sc-burn { width: 100%; min-width: 420px; max-width: 760px; height: auto; }
+.sc-burn .eje { stroke: var(--line-2); stroke-width: 1; }
+.sc-burn .eje-texto { fill: var(--text-2); font: 11px var(--f-mono); }
+.sc-burn .ideal { stroke: var(--text-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.sc-burn .real { stroke-width: 2.5; stroke-linejoin: round; }
+
+/* Definition of Ready en el detalle de la tarea */
+.sc-dor.lista { border-left: 3px solid var(--green); padding-left: 12px; }
+.sc-criterios { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sc-criterios li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; align-items: start; }
+.sc-criterios input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; }
+.sc-estado { margin-top: 2px; width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--line-2); display: grid; place-items: center; color: #07132F; }
+.sc-estado.ok { background: var(--green); border-color: var(--green); }
+.sc-crit-cuerpo { display: grid; gap: 4px; min-width: 0; }
+.sc-crit-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.sc-crit-cab strong { font-size: 13.5px; }
+.sc-crit-cuerpo p { font-size: 12.5px; }
+.sc-falta { color: var(--red-text); font-size: 12.5px; }
+.sc-info { color: var(--text-2); font-size: 12.5px; }
+.sc-criterios li.ok .sc-crit-cab strong { color: var(--green-text); }
+.sc-dor-estado { display: grid; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--card-2); }
+.sc-excepcion { display: grid; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.sc-excepcion h4 { font-size: 13.5px; font-weight: 600; }
+.sc-exc-form, .sc-exc { display: grid; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--card-2); }
+.sc-exc.vencida { box-shadow: inset 3px 0 0 var(--red); }

@@ -171,7 +171,8 @@ function ChipsIntegrantes({ ctx, valor, alCambiar, editable = true }) {
   })}</div>`;
 }
 function ChipsEtiquetas({ ctx, valor, alCambiar, editable = true }) {
-  return html`<div class="selector-chips">${ctx.etiquetas.map(x => {
+  // Las etiquetas Sprint no se tildan a mano: se asignan desde Scrum o desde el campo Sprint del detalle (exigen DoR)
+  return html`<div class="selector-chips">${ctx.etiquetas.filter(x => !x.sprint).map(x => {
     const on = valor.includes(x.id);
     return html`<button type="button" key=${x.id} class="chip-btn solo-texto" style=${`--c:var(--c-${x.color})`} aria-pressed=${on} disabled=${!editable} onClick=${() => alCambiar(on ? valor.filter(y => y !== x.id) : [...valor, x.id], x, !on)}>
       <span class="punto"></span>${x.nombre}

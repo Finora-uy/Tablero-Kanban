@@ -152,6 +152,18 @@ Cada tarea muestra en la sección **Código** sus ramas, PRs (con su estado de r
 
 Cada aviso se procesa una sola vez (se anota en `github_entregas`). Si uno falló, en **Recent Deliveries → Redeliver** se vuelve a procesar.
 
+## Scrum: sprints y Definition of Ready
+
+La pestaña **Scrum** tiene el calendario del 13/12 al 14/02, los sprints y la planificación. No hace falta tocar la base de datos: los sprints se guardan como un documento más.
+
+- **Roles:** el Scrum Master y el Product Owner se reconocen por el **Rol** del perfil (Equipo → editar perfil): tiene que decir `Scrum Master` o `Product Owner` (puede combinarse con otro rol, por ejemplo «Gerente de proyecto, Scrum Master»). Hasta que alguien tenga el rol, no se bloquea a nadie. Es una regla de la pantalla: la base de datos solo distingue «del equipo» o no.
+- **Sprints:** arrancan el lunes 14/12 y van uno a continuación del otro. El SM o el PO los crean (hay un botón para los 4 de 2 semanas) y eligen cuántas semanas dura cada uno. Al crear «Sprint N» aparecen solas su **etiqueta** y su **etapa** (esta última sirve para cargar horas). No se editan en Ajustes: se borran borrando el sprint, que no puede tener tareas.
+- **Ceremonias en el calendario:** planificación y refinamiento 1 el primer día; refinamiento 2 (SM y PO) a mitad del sprint; revisión y retrospectiva el último viernes.
+- **Columna «Listo»:** va entre «Por hacer» y «En curso». Solo el PO pasa una tarea ahí, y solo si cumple la DoR.
+- **Etiqueta Sprint:** no se tilda a mano. Se asigna desde Scrum (arrastrando o con «Sumar a…») o desde el campo **Sprint** del detalle, y solo la pone el SM o el PO. La tarea tiene que estar **Lista** (DoR completa + PO) o tener una **excepción** aprobada.
+- **Definition of Ready (v1.1, FIN-67):** en el detalle de cada tarea, 10 criterios con quién verifica cada uno. Algunos se comprueban solos (estimación, criterios de aceptación cargados, responsable, RF y MoSCoW); el resto se tilda y queda registrado quién y cuándo. Las investigaciones (spike) y los bugs tienen su propia lista corta.
+- **Excepción:** se pide con qué falta, quién lo resuelve y el plazo; entra cuando el SM y el PO dan su acuerdo, cada uno desde su cuenta. Queda en el historial, se ve en la tarjeta y, si el plazo vence sin resolverse, Scrum la marca en rojo.
+
 ## Cosas a saber
 
 - **Si nadie entra en 7 días, Supabase pausa el proyecto.**
