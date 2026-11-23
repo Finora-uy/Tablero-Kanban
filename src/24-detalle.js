@@ -117,7 +117,7 @@ function DetalleTarea({ t, ctx, editable, alCerrar, alAbrir }) {
       </div>
 
       <${RevisionOk} t=${t} ctx=${ctx} editable=${editable} />
-      <${SeccionDoR} t=${t} ctx=${ctx} editable=${editable} act=${act} />
+      ${esTareaScrum(t) && html`<${SeccionDoR} t=${t} ctx=${ctx} editable=${editable} act=${act} />`}
 
       <section class="seccion">
         <div class="seccion-cab"><h3>Descripción</h3></div>

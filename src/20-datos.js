@@ -145,6 +145,7 @@ const CONFIG_BASE = {
     { id: 'investigacion', nombre: 'Investigación', color: 'verde' },
     { id: 'seguridad', nombre: 'Seguridad', color: 'naranja' },
     { id: 'ort', nombre: 'Académico ORT', color: 'mostaza' },
+    { id: 'scrum', nombre: 'Scrum', color: 'pizarra', fijo: true },
   ],
   // Para la sección Horas: en qué etapa del proyecto y qué tipo de trabajo
   etapas: [
@@ -192,7 +193,16 @@ function armarEtapas(guardados) {
   return [...base, ...ETAPAS_FIJAS.map(f => ({ ...f, ...(guardados.find(x => x.id === f.id) || {}), fijo: true }))];
 }
 // La columna «Listo» (la tarea cumple la DoR) está siempre, aunque la config guardada sea anterior: va antes de «En curso»
+// La etiqueta «Scrum» también está siempre: solo las tareas que la llevan (o están en un sprint) tienen que cumplir la DoR
+function asegurarScrum(cfg) {
+  if (!cfg || !Array.isArray(cfg.etiquetas)) return cfg;
+  const fija = CONFIG_BASE.etiquetas.find(x => x.id === 'scrum');
+  const guardada = cfg.etiquetas.find(x => x.id === 'scrum');
+  const resto = cfg.etiquetas.filter(x => x.id !== 'scrum');
+  return { ...cfg, etiquetas: [...resto, { ...fija, ...(guardada || {}), fijo: true }] };
+}
 function asegurarListo(cfg) {
+  cfg = asegurarScrum(cfg);
   if (!cfg || !Array.isArray(cfg.columnas) || cfg.columnas.some(c => c.id === 'listo')) return cfg;
   const cols = [...cfg.columnas];
   const fin = cols.findIndex(c => c.final), f = fin >= 0 ? fin : cols.length - 1;

@@ -87,7 +87,10 @@ function motivoNoEntraASprint(t) {
   if (!t.dorOk) return `${codigoDe(t)} cumple los criterios, pero el Product Owner todavía no la marcó como Listo.`;
   return null;
 }
+// La DoR solo se exige a las tareas de Scrum: las que llevan la etiqueta «Scrum» o ya están en un sprint
+const esTareaScrum = t => (t.etiquetas || []).some(x => x === 'scrum' || ES_ID_SPRINT.test(x));
 function motivoListoBloqueado(t) {
+  if (!esTareaScrum(t)) return null;
   if (!puedeMarcarListo()) {
     const po = [...estado.integrantes.values()].filter(rolPO).map(m => m.nombre).join(', ');
     return `Solo el Product Owner${po ? ' (' + po + ')' : ''} puede pasar una tarea a Listo.`;

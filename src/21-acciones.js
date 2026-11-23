@@ -140,9 +140,11 @@ const acciones = {
       if (colId === 'listo') {
         const motivo = motivoListoBloqueado({ ...t, id });
         if (motivo) { avisar(motivo, 'error'); notificar(); return Promise.resolve(false); }
-        cambios.dorOk = { por: yo(), en: ahoraISO() };
-        extra.__que = extra.__que || 'la marcó como Listo: cumple la Definition of Ready';
-        que = extra.__que;
+        if (esTareaScrum(t)) {
+          cambios.dorOk = { por: yo(), en: ahoraISO() };
+          extra.__que = extra.__que || 'la marcó como Listo: cumple la Definition of Ready';
+          que = extra.__que;
+        }
       } else if (t.columna === 'listo' && indiceColumna(colId) < indiceColumna('listo')) cambios.dorOk = null;
       // Cada vez que cambia a otra columna que no es la final, los OK empiezan de cero
       if (!esFinal(colId) && (t.aprobaciones || []).length) cambios.aprobaciones = [];
