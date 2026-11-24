@@ -115,12 +115,16 @@ function useTooltips(ref) {
 }
 
 /* ===== App ===== */
+// Los emails traen `?tarea=<id>` o `?vista=tablero`: abren el Tablero aunque lo último que se haya visto fuera otra sección
+const ENLACE = new URLSearchParams(location.search);
+const ENLACE_TAREA = ENLACE.get('tarea');
+const ENLACE_AL_TABLERO = !!ENLACE_TAREA || ENLACE.get('vista') === 'tablero';
 function App() {
   const e = useEstado();
-  const [vista, setVistaS] = useState(() => { const v = leer('finora-vista'); return VISTAS.some(x => x.id === v) ? v : 'tablero'; });
+  const [vista, setVistaS] = useState(() => { const v = ENLACE_AL_TABLERO ? 'tablero' : leer('finora-vista'); return VISTAS.some(x => x.id === v) ? v : 'tablero'; });
   const [filtros, setFiltrosS] = useState(cargarFiltros);
   const [carril, setCarrilS] = useState(() => { const c = leer('finora-carril'); return CARRILES.some(x => x.id === c) ? c : 'ninguno'; });
-  const [abierta, setAbierta] = useState(null);
+  const [abierta, setAbierta] = useState(ENLACE_TAREA);
   const [modal, setModal] = useState(null);
   const [soloMirar, setSoloMirar] = useState(() => leerSesion('finora-solo-mirar') === '1');
   const [forzarSumate, setForzarSumate] = useState(false);
@@ -131,6 +135,13 @@ function App() {
   const setVista = v => { setVistaS(v); guardar('finora-vista', v); };
   const setFiltros = f => { setFiltrosS(f); guardar('finora-filtros', JSON.stringify({ ...f, q: '' })); };
   const setCarril = c => { setCarrilS(c); guardar('finora-carril', c); };
+  // Una vez usado el enlace del mail se limpia la dirección, para que al recargar no vuelva a abrirse
+  useEffect(() => {
+    if (!ENLACE_AL_TABLERO) return;
+    guardar('finora-vista', 'tablero');
+    const u = new URL(location.href); u.searchParams.delete('tarea'); u.searchParams.delete('vista');
+    try { history.replaceState(history.state, '', u); } catch (_) {}
+  }, []);
 
   const ctx = armarContexto(e);
   const listo = e.modo !== 'cargando' && e.cargado.tareas && e.cargado.integrantes && e.cargado.config;
@@ -244,7 +255,7 @@ function App() {
     </div>
     ${listo && conFiltros && html`<${BarraFiltros} ctx=${ctx} filtros=${filtros} setFiltros=${setFiltros} vista=${vista} carril=${carril} setCarril=${setCarril} editable=${editable} buscarRef=${buscarRef} alNueva=${alNueva} />`}
     <main class=${'principal v-' + vista}>${cuerpo}</main>
-    ${abierta && html`<${Detalle} id=${abierta} ctx=${ctx} editable=${editable} alCerrar=${() => setAbierta(null)} alAbrir=${setAbierta} />`}
+    ${abierta && listo && html`<${Detalle} id=${abierta} ctx=${ctx} editable=${editable} alCerrar=${() => setAbierta(null)} alAbrir=${setAbierta} />`}
     ${ventana}
     ${mostrarSumate && html`<${ModalSumate} ctx=${ctx} e=${e} alCerrar=${cerrarSumate} />`}
     <${Avisos} avisos=${e.avisos} />

@@ -106,7 +106,7 @@ export default async function handler(req, res) {
       const a = d.userId ? await supabase(`/auth/v1/admin/users/${encodeURIComponent(d.userId)}`) : null;
       const email = a && a.ok && a.datos && a.datos.email;
       if (!email) { fallidos.push({ id, motivo: 'sin-cuenta' }); continue; }
-      const c = correo({ nombre: d.nombre || 'equipo', lista, prefijo, nombresColumna, url: sitio });
+      const c = correo({ nombre: d.nombre || 'equipo', lista, prefijo, nombresColumna, url: `${sitio}/?vista=tablero` });
       const r = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST', headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ sender: { name: process.env.BREVO_SENDER_NAME || 'Tablero Finora', email: BREVO_SENDER_EMAIL }, to: [{ email, name: d.nombre || undefined }],

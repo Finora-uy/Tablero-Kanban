@@ -36,7 +36,7 @@ function correo({ destinatario, quien, codigo, titulo, columna, final, url }) {
       <div style="font-size:17px;font-weight:600;margin-top:4px">${esc(titulo)}</div>
     </div>
     <p style="font-size:15px;line-height:1.5;color:#2A3553;margin:0 0 20px">Está en «${esc(columna)}» y no puede pasar a «${esc(final)}» hasta que todos los responsables den su OK.</p>
-    <a href="${esc(url)}" style="display:inline-block;background:#C0843A;color:#07132F;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:8px">Abrir el tablero</a>
+    <a href="${esc(url)}" style="display:inline-block;background:#C0843A;color:#07132F;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:8px">Abrir la tarea</a>
     <p style="font-size:12px;color:#5A6685;margin:24px 0 0">Entrá a la tarea y tocá «Dar mi OK». Este mail lo mandó el tablero porque alguien del equipo lo pidió.</p>
   </div>`;
   return { asunto, texto, html };
@@ -54,7 +54,7 @@ function correoRever({ destinatario, quien, codigo, titulo, motivo, url }) {
       <div style="font-size:17px;font-weight:600;margin-top:4px">${esc(titulo)}</div>
     </div>
     ${motivo ? `<p style="font-size:15px;line-height:1.5;white-space:pre-wrap;margin:0 0 16px"><strong>Qué rever:</strong> ${esc(motivo)}</p>` : ''}
-    <a href="${esc(url)}" style="display:inline-block;background:#C0843A;color:#07132F;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:8px">Abrir el tablero</a>
+    <a href="${esc(url)}" style="display:inline-block;background:#C0843A;color:#07132F;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:8px">Abrir la tarea</a>
     <p style="font-size:12px;color:#5A6685;margin:24px 0 0">Si habías dado tu OK, se quitó. Este mail lo mandó el tablero porque alguien del equipo lo pidió.</p>
   </div>`;
   return { asunto, texto, html };
@@ -133,7 +133,7 @@ export default async function handler(req, res) {
       const a = d.userId ? await supabase(`/auth/v1/admin/users/${encodeURIComponent(d.userId)}`) : null;
       const email = a && a.ok && a.datos && a.datos.email;
       if (!email) { fallidos.push({ id, motivo: 'sin-email' }); continue; }
-      const datos = { destinatario: d.nombre || 'equipo', quien, codigo: `${prefijo}-${tarea.numero ?? '?'}`, titulo: tarea.titulo, url: sitio };
+      const datos = { destinatario: d.nombre || 'equipo', quien, codigo: `${prefijo}-${tarea.numero ?? '?'}`, titulo: tarea.titulo, url: `${sitio}/?tarea=${encodeURIComponent(tareaId)}` };
       const c = esRever ? correoRever({ ...datos, motivo }) : correo({ ...datos, columna: revision.nombre, final: columnas[iFinal].nombre });
       const r = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST', headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
