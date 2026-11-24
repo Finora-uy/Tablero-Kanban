@@ -4,6 +4,7 @@
 
 const ESPERA_MS = 6 * 3600e3; // un recordatorio cada 6 horas por persona y tarea
 const MAX_DESTINATARIOS = 8;
+const ESPERA_REVER_MS = 2 * 60e3; // evita mandar dos veces el mismo pedido de rever
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const urlBase = () => (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
@@ -41,6 +42,24 @@ function correo({ destinatario, quien, codigo, titulo, columna, final, url }) {
   return { asunto, texto, html };
 }
 
+function correoRever({ destinatario, quien, codigo, titulo, motivo, url }) {
+  const asunto = `Para rever ${codigo}: ${titulo}`;
+  const texto = `Hola ${destinatario}, ${quien} te pide que revises de nuevo la tarea ${codigo} «${titulo}». Si habías dado tu OK, se quitó.\n${motivo ? `\nQué rever: ${motivo}\n` : ''}\nAbrila acá: ${url}\n`;
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#07132F">
+    <p style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#5A6685;margin:0 0 16px">Finora · Tablero del equipo</p>
+    <p style="font-size:16px;margin:0 0 12px">Hola ${esc(destinatario)},</p>
+    <p style="font-size:16px;line-height:1.5;margin:0 0 16px"><strong>${esc(quien)}</strong> te pide que <strong>revises de nuevo</strong> la tarea:</p>
+    <div style="border:1px solid #D8DFEB;border-radius:10px;padding:14px 16px;margin:0 0 16px">
+      <div style="font-family:Consolas,monospace;font-size:13px;color:#5A6685">${esc(codigo)}</div>
+      <div style="font-size:17px;font-weight:600;margin-top:4px">${esc(titulo)}</div>
+    </div>
+    ${motivo ? `<p style="font-size:15px;line-height:1.5;white-space:pre-wrap;margin:0 0 16px"><strong>Qué rever:</strong> ${esc(motivo)}</p>` : ''}
+    <a href="${esc(url)}" style="display:inline-block;background:#C0843A;color:#07132F;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:8px">Abrir el tablero</a>
+    <p style="font-size:12px;color:#5A6685;margin:24px 0 0">Si habías dado tu OK, se quitó. Este mail lo mandó el tablero porque alguien del equipo lo pidió.</p>
+  </div>`;
+  return { asunto, texto, html };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'Solo se acepta POST.' }); }
@@ -67,6 +86,8 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const tareaId = String(body.tareaId || '');
     const pedidos = [...new Set(Array.isArray(body.destinatarios) ? body.destinatarios.map(String) : [])].slice(0, MAX_DESTINATARIOS);
+    const esRever = body.tipo === 'rever';
+    const motivo = String(body.motivo || '').trim().slice(0, 500);
     if (!tareaId || !pedidos.length) return res.status(400).json({ error: 'Falta la tarea o a quién recordarle.' });
 
     const [tareaR, cfgR, intR] = await Promise.all([
@@ -78,25 +99,27 @@ export default async function handler(req, res) {
     const yoId = [...integrantes].find(([, d]) => d.userId === u.datos.id)?.[0] || null;
     const quien = (yoId && integrantes.get(yoId).nombre) || 'Alguien del equipo';
 
-    // 3) La tarea tiene que estar en revisión, con 2 o más responsables
+    // 3) La tarea tiene que estar en revisión; el recordatorio de OK además pide 2 o más responsables
     const cfg = cfgR.datos && cfgR.datos[0] && cfgR.datos[0].data;
     const columnas = (cfg && cfg.columnas) || [{ id: 'ideas', nombre: 'Ideas' }, { id: 'por-hacer', nombre: 'Por hacer' }, { id: 'en-curso', nombre: 'En curso' }, { id: 'revision', nombre: 'En revisión' }, { id: 'hecho', nombre: 'Hecho', final: true }];
     const iFinal = columnas.findIndex(c => c.final) >= 0 ? columnas.findIndex(c => c.final) : columnas.length - 1;
     const revision = columnas[iFinal - 1];
     if (!revision || tarea.columna !== revision.id) return res.status(409).json({ error: `La tarea ya no está en «${revision ? revision.nombre : 'revisión'}».` });
     const asignados = (tarea.asignados || []).filter(id => integrantes.has(id));
-    if (asignados.length < 2) return res.status(409).json({ error: 'Esta tarea no pide OK de varios responsables.' });
+    if (!esRever && asignados.length < 2) return res.status(409).json({ error: 'Esta tarea no pide OK de varios responsables.' });
 
     // 4) A quién sí: responsables que todavía no dieron el OK, que no sean quien pide y que no hayan sido avisados hace poco
     const dieronOk = tarea.aprobaciones || [];
-    const recordatorios = { ...(tarea.recordatorios || {}) };
+    const campo = esRever ? 'avisosRever' : 'recordatorios';
+    const espera = esRever ? ESPERA_REVER_MS : ESPERA_MS;
+    const recordatorios = { ...(tarea[campo] || {}) };
     const ahora = Date.now();
     const omitidos = [], objetivos = [];
     for (const id of pedidos) {
       if (!asignados.includes(id)) omitidos.push({ id, motivo: 'no-responsable' });
-      else if (dieronOk.includes(id)) omitidos.push({ id, motivo: 'ya-dio-ok' });
+      else if (!esRever && dieronOk.includes(id)) omitidos.push({ id, motivo: 'ya-dio-ok' });
       else if (id === yoId) omitidos.push({ id, motivo: 'sos-vos' });
-      else if (recordatorios[id] && ahora - Date.parse(recordatorios[id]) < ESPERA_MS) omitidos.push({ id, motivo: 'reciente', desde: recordatorios[id] });
+      else if (recordatorios[id] && ahora - Date.parse(recordatorios[id]) < espera) omitidos.push({ id, motivo: 'reciente', desde: recordatorios[id] });
       else objetivos.push(id);
     }
 
@@ -110,18 +133,19 @@ export default async function handler(req, res) {
       const a = d.userId ? await supabase(`/auth/v1/admin/users/${encodeURIComponent(d.userId)}`) : null;
       const email = a && a.ok && a.datos && a.datos.email;
       if (!email) { fallidos.push({ id, motivo: 'sin-email' }); continue; }
-      const c = correo({ destinatario: d.nombre || 'equipo', quien, codigo: `${prefijo}-${tarea.numero ?? '?'}`, titulo: tarea.titulo, columna: revision.nombre, final: columnas[iFinal].nombre, url: sitio });
+      const datos = { destinatario: d.nombre || 'equipo', quien, codigo: `${prefijo}-${tarea.numero ?? '?'}`, titulo: tarea.titulo, url: sitio };
+      const c = esRever ? correoRever({ ...datos, motivo }) : correo({ ...datos, columna: revision.nombre, final: columnas[iFinal].nombre });
       const r = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST', headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ sender: { name: process.env.BREVO_SENDER_NAME || 'Tablero Finora', email: BREVO_SENDER_EMAIL }, to: [{ email, name: d.nombre || undefined }],
-          subject: c.asunto, htmlContent: c.html, textContent: c.texto, tags: ['recordatorio-ok'] }),
+          subject: c.asunto, htmlContent: c.html, textContent: c.texto, tags: [esRever ? 'rever' : 'recordatorio-ok'] }),
       });
       if (r.ok) { enviados.push(id); recordatorios[id] = new Date(ahora).toISOString(); }
       else { fallidos.push({ id, motivo: 'brevo-' + r.status }); console.error('Brevo', r.status, await r.text().catch(() => '')); }
     }
 
     // 6) Anotar cuándo se avisó, para respetar la espera
-    if (enviados.length) await supabase('/rest/v1/rpc/actualizar_doc', { method: 'POST', body: JSON.stringify({ p_coleccion: 'tareas', p_id: tareaId, p_cambios: { recordatorios } }) });
+    if (enviados.length) await supabase('/rest/v1/rpc/actualizar_doc', { method: 'POST', body: JSON.stringify({ p_coleccion: 'tareas', p_id: tareaId, p_cambios: { [campo]: recordatorios } }) });
     const estado = enviados.length ? 200 : (fallidos.length ? 502 : 429);
     return res.status(estado).json({ enviados, omitidos, fallidos });
   } catch (err) {

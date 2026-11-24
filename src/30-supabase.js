@@ -216,6 +216,23 @@ function conectarGithub(cliente) {
   cargar(Object.keys(TABLAS));
 }
 
+/* ===== Aviso por email de «Rever» (mismo servicio que el recordatorio) ===== */
+async function avisarReverWeb(tareaId, quienId, motivo) {
+  const nombre = nombreMiembro(quienId);
+  const falla = por => { avisar(`Quedó pedido que ${nombre} la revea, pero no le llegó el email: ${por}`, 'error'); return false; };
+  const { data } = await web.cliente.auth.getSession();
+  const token = data && data.session && data.session.access_token;
+  if (!token) return falla('tu sesión venció. Recargá la página.');
+  let r, j = {};
+  try {
+    r = await fetch('/api/recordar-ok', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ tipo: 'rever', tareaId, destinatarios: [quienId], motivo }) });
+    j = await r.json().catch(() => ({}));
+  } catch (_) { return falla('no hay conexión con el servidor.'); }
+  if (r.ok && j.enviados && j.enviados.length) { avisar(`Le avisamos por email a ${nombre} que la revea.`); return true; }
+  const x = [...(j.omitidos || []), ...(j.fallidos || [])][0];
+  return falla(j.error || (x && MOTIVOS_RECORDATORIO[x.motivo]) || 'probá de nuevo en un rato.');
+}
+
 /* ===== Recordatorio por email para dar el OK (lo manda el servicio api/recordar-ok) ===== */
 const MOTIVOS_RECORDATORIO = { reciente: 'ya se le avisó hace poco', 'ya-dio-ok': 'ya dio su OK', 'no-responsable': 'no es responsable', 'sos-vos': 'sos vos', 'sin-email': 'no tiene email cargado' };
 async function recordarOkWeb(tareaId, ids) {

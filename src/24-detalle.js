@@ -241,8 +241,13 @@ function Comentarios({ t, ctx, editable }) {
 // OK de cada responsable antes de pasar a la columna final (solo si hay 2 o más)
 function RevisionOk({ t, ctx, editable }) {
   const [enviando, setEnviando] = useState([]);
+  const [reverA, setReverA] = useState(null);
+  const [motivo, setMotivo] = useState('');
   const asig = (t.asignados || []).filter(id => ctx.integrantes.has(id));
-  if (asig.length < 2 || !esRevision(t.columna)) return null;
+  const rever = t.rever || {};
+  const varios = asig.length >= 2;
+  // Con un solo responsable no hay OK, pero otra persona igual puede pedirle que la revea
+  if (!asig.length || !esRevision(t.columna) || (!varios && asig[0] === ctx.yo && !rever[ctx.yo])) return null;
   const ok = t.aprobaciones || [];
   const listos = asig.filter(id => ok.includes(id)).length;
   const soyResponsable = ctx.yo && asig.includes(ctx.yo);
@@ -254,23 +259,36 @@ function RevisionOk({ t, ctx, editable }) {
   const reciente = id => rec[id] && Date.now() - Date.parse(rec[id]) < 6 * 3600e3;
   const pendientes = asig.filter(id => !ok.includes(id) && id !== ctx.yo);
   const disponibles = pendientes.filter(id => !reciente(id));
+  const puedeRever = id => editable && ctx.yo && id !== ctx.yo && !rever[id] && (!varios || ok.includes(id));
+  const enviarRever = async () => {
+    const id = reverA, texto = motivo;
+    setReverA(null); setMotivo('');
+    await acciones.pedirRever(t.id, id, texto);
+  };
   const recordar = async ids => {
     setEnviando(l => [...l, ...ids]);
     await extensiones.recordarOk(t.id, ids);
     setEnviando(l => l.filter(x => !ids.includes(x)));
   };
-  return html`<section class=${'seccion revision-ok' + (listos === asig.length ? ' completa' : '')}>
-    <div class="seccion-cab"><h3>OK de los responsables</h3><span class="mono tenue">${listos}/${asig.length}</span></div>
-    <p class="tenue">${listos === asig.length ? `Están todos los OK: ya se puede pasar a ${final ? final.nombre : 'la columna final'}.` : `Para pasarla a ${final ? final.nombre : 'la columna final'}, cada responsable tiene que dar su OK.`}</p>
+  return html`<section class=${'seccion revision-ok' + (varios && listos === asig.length ? ' completa' : '')}>
+    <div class="seccion-cab"><h3>${varios ? 'OK de los responsables' : 'Revisión'}</h3>${varios && html`<span class="mono tenue">${listos}/${asig.length}</span>`}</div>
+    <p class="tenue">${!varios ? 'Si algo no cierra, pedile que la revea: le llega un email.' : listos === asig.length ? `Están todos los OK: ya se puede pasar a ${final ? final.nombre : 'la columna final'}.` : `Para pasarla a ${final ? final.nombre : 'la columna final'}, cada responsable tiene que dar su OK.`}</p>
     <ul class="lista-simple">${asig.map(id => html`<li key=${id}>
       <${Avatar} m=${ctx.integrantes.get(id)} t=${22} /><span class="crece">${nombreDe(id, ctx)}${id === ctx.yo ? ' (vos)' : ''}</span>
-      ${puedeRecordar && pendientes.includes(id) && (reciente(id)
+      ${varios && puedeRecordar && pendientes.includes(id) && (reciente(id)
         ? html`<span class="tenue recordado" title=${'Se le recordó ' + momento(rec[id]) + '. Se puede volver a avisar pasadas 6 horas.'}>Recordado ${momento(rec[id])}</span>`
         : html`<button class="btn btn-chico" disabled=${enviando.includes(id)} title="Le manda un email para que dé su OK" onClick=${() => recordar([id])}><${Icono} n="sobre" t=${13} />${enviando.includes(id) ? 'Enviando…' : 'Recordar OK'}</button>`)}
-      ${ok.includes(id) ? html`<span class="tag hecho"><${Icono} n="check" t=${11} />OK</span>` : html`<span class="tag baja">Pendiente</span>`}
+      ${puedeRever(id) && html`<button class="btn btn-chico" title="Le quita el OK y le avisa por email" onClick=${() => { setReverA(id); setMotivo(''); }}>Rever</button>`}
+      ${rever[id] ? html`<span class="tag rever">A rever</span>` : !varios ? null : ok.includes(id) ? html`<span class="tag hecho"><${Icono} n="check" t=${11} />OK</span>` : html`<span class="tag baja">Pendiente</span>`}
+      ${rever[id] && html`<span class="rever-nota">${nombreDe(rever[id].por, ctx)} pidió que la revea ${momento(rever[id].en)}${rever[id].motivo ? ': ' + rever[id].motivo : ''}</span>`}
     </li>`)}</ul>
-    ${puedeRecordar && disponibles.length > 1 && html`<div><button class="btn btn-chico" disabled=${disponibles.some(id => enviando.includes(id))} onClick=${() => recordar(disponibles)}><${Icono} n="sobre" t=${13} />Recordar el OK a los ${disponibles.length} pendientes</button></div>`}
-    ${editable && soyResponsable && html`<div>${diYo
+    ${reverA && puedeRever(reverA) && html`<div class="campo">
+      <label for="rever-motivo">¿Qué tiene que rever ${nombreDe(reverA, ctx)}? (opcional)</label>
+      <textarea class="entrada" id="rever-motivo" rows="2" maxlength="500" value=${motivo} onInput=${e => setMotivo(e.target.value)}></textarea>
+      <div class="fila-fin"><button class="btn btn-fantasma btn-chico" onClick=${() => setReverA(null)}>Cancelar</button><button class="btn btn-primario btn-chico" onClick=${enviarRever}><${Icono} n="sobre" t=${13} />${varios ? 'Quitar OK y avisar' : 'Avisar por email'}</button></div>
+    </div>`}
+    ${varios && puedeRecordar && disponibles.length > 1 && html`<div><button class="btn btn-chico" disabled=${disponibles.some(id => enviando.includes(id))} onClick=${() => recordar(disponibles)}><${Icono} n="sobre" t=${13} />Recordar el OK a los ${disponibles.length} pendientes</button></div>`}
+    ${varios && editable && soyResponsable && html`<div>${diYo
       ? html`<button class="btn btn-chico" onClick=${() => acciones.darOk(t.id, false)}>Retirar mi OK</button>`
       : html`<button class="btn btn-primario btn-chico" onClick=${() => acciones.darOk(t.id, true)}><${Icono} n="check" t=${14} />Dar mi OK</button>`}</div>`}
   </section>`;

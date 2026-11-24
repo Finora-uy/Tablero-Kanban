@@ -148,6 +148,7 @@ const acciones = {
       } else if (t.columna === 'listo' && indiceColumna(colId) < indiceColumna('listo')) cambios.dorOk = null;
       // Cada vez que cambia a otra columna que no es la final, los OK empiezan de cero
       if (!esFinal(colId) && (t.aprobaciones || []).length) cambios.aprobaciones = [];
+      if (t.rever) cambios.rever = null; // los pedidos de rever valen solo mientras sigue en revisión
       const ahora = ahoraISO();
       cambios.columna = colId; cambios.entroEnColumna = ahora; cambios.terminadaEn = esFinal(colId) ? ahora : null;
       que = extra.__que || `la movió a ${nombreColumna(colId)}`;
@@ -187,7 +188,25 @@ const acciones = {
     if (!t || !yoId) return Promise.resolve(false);
     const ok = (t.aprobaciones || []).filter(x => x !== yoId);
     if (dar) ok.push(yoId);
-    return acciones.actualizarTarea(id, { aprobaciones: ok }, dar ? 'dio el OK' : 'retiró su OK');
+    const cambios = { aprobaciones: ok };
+    if (dar && t.rever && t.rever[yoId]) cambios.rever = { ...t.rever, [yoId]: null };
+    return acciones.actualizarTarea(id, cambios, dar ? 'dio el OK' : 'retiró su OK');
+  },
+  // «Rever»: le quita el OK a un responsable, deja anotado qué revisar y le avisa por email
+  async pedirRever(id, quienId, motivo) {
+    const t = estado.tareas.get(id), yoId = yo();
+    if (!t || !yoId || quienId === yoId) return false;
+    const texto = (motivo || '').trim().slice(0, 500);
+    const nombre = nombreMiembro(quienId);
+    const ok = await acciones.actualizarTarea(id, {
+      aprobaciones: (t.aprobaciones || []).filter(x => x !== quienId),
+      rever: { ...(t.rever || {}), [quienId]: { por: yoId, en: ahoraISO(), motivo: texto } },
+    }, `le pidió a ${nombre} que la revea`);
+    if (!ok) return false;
+    if (texto) await acciones.comentar(id, `Para rever (${nombre}): ${texto}`);
+    if (extensiones.avisarRever) await extensiones.avisarRever(id, quienId, texto);
+    else avisar(`Quedó pedido que ${nombre} la revea. El email solo se manda desde la versión web.`, 'info');
+    return true;
   },
   archivar(id, archivar) { return acciones.actualizarTarea(id, { archivada: archivar }, archivar ? 'la archivó' : 'la sacó del archivo'); },
   async eliminarTarea(id) {

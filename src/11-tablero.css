@@ -263,6 +263,7 @@ kbd {
 .t-dato.completo { color: var(--green-text); }
 .t-ok { display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 6px; border-radius: 5px; font: 500 11px/1 var(--f-mono); background: var(--yellow-tint); color: var(--yellow-text); }
 .t-ok.completo { background: var(--green-tint); color: var(--green-text); }
+.t-rever { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 5px; font: 500 11px/1 var(--f-mono); background: var(--red-tint); color: var(--red-text); }
 .t-mirando { display: inline-flex; align-items: center; gap: 3px; color: var(--text-2); }
 .t-mirando .avatar { box-shadow: 0 0 0 2px var(--card); }
 .hueco {

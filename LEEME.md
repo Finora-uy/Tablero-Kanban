@@ -90,6 +90,8 @@ En Vercel, andá a **Deployments**, abrí el menú **⋯** del último deploy y 
 
 En una tarea con varios responsables, el botón **Recordar OK** les manda un email para que den su OK. Lo manda el servicio `api/recordar-ok.js` (Vercel Function, gratis) a través de **Brevo** (plan gratis: 300 mails por día).
 
+En «En revisión», el botón **Rever** (junto a cada responsable) le quita el OK a esa persona, deja anotado qué tiene que revisar (también como comentario) y le manda un email con ese texto. Sirve también en tareas con un solo responsable. La marca «A rever» se borra cuando vuelve a dar el OK o la tarea cambia de columna. Usa el mismo servicio y las mismas claves que el recordatorio.
+
 1. En Brevo: verificá la dirección que va a mandar (**Senders**) y creá una clave en **SMTP & API → API Keys**.
 2. En Vercel, **Settings → Environment Variables** (marcá *Production* y, para las claves, *Sensitive*):
 

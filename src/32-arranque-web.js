@@ -17,5 +17,6 @@ extensiones.plataforma = 'web';
   web.cliente = cliente;
   extensiones.equipo = BloqueInvitaciones;
   extensiones.recordarOk = recordarOkWeb;
+  extensiones.avisarRever = avisarReverWeb;
   render(html`<${RaizWeb} cliente=${cliente} />`, raiz);
 })();
