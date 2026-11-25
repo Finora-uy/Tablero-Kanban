@@ -284,20 +284,17 @@ function miembroDePeriodo(p, miembros) {
   }
   return empate ? null : mejor;
 }
-// Quiénes no están un día: lo cargado en Disponibilidad más las ausencias del equipo
+// Quiénes no están un día, y las ausencias que no se pudieron atribuir a nadie
 function ausentesDelDia(ctx, iso) {
-  const personas = new Map(), sueltas = [];
+  const personas = [];
   for (const m of ctx.miembros) {
     const motivo = ausencia(ctx, m.id, iso);
-    if (motivo !== null) personas.set(m.id, { m, motivo: typeof motivo === 'string' ? motivo : '' });
+    if (motivo !== null) personas.push({ m, motivo: typeof motivo === 'string' ? motivo : '' });
   }
-  for (const p of ctx.roadmap.periodos) {
-    if (p.tipo !== 'ausencia' || !(p.desde <= iso && iso <= (p.hasta || p.desde))) continue;
-    const m = miembroDePeriodo(p, ctx.miembros);
-    if (!m) sueltas.push(p.etiqueta);
-    else if (!personas.has(m.id)) personas.set(m.id, { m, motivo: p.etiqueta });
-  }
-  return { personas: [...personas.values()], sueltas };
+  const sueltas = ctx.roadmap.periodos
+    .filter(p => p.tipo === 'ausencia' && p.desde <= iso && iso <= (p.hasta || p.desde) && !miembroDePeriodo(p, ctx.miembros))
+    .map(p => p.etiqueta);
+  return { personas, sueltas };
 }
 // El primer nombre; si se repite en el equipo, con la inicial que sigue
 function nombreCorto(m, miembros) {
@@ -310,7 +307,7 @@ function capacidadSprint(s, ctx) {
     let min = 0;
     for (let d = s.inicio; d <= s.fin; d = sumarDias(d, 1)) {
       const dow = (aFecha(d).getDay() + 6) % 7;
-      if (dow > 4 || esFeriado(ctx, d) || ausentesDelDia(ctx, d).personas.some(x => x.m.id === m.id)) continue;
+      if (dow > 4 || esFeriado(ctx, d) || ausencia(ctx, m.id, d) !== null) continue;
       min += minutosFranjas(semanaDe(ctx, m.id)[dow]);
     }
     return { m, horas: min / 60 };

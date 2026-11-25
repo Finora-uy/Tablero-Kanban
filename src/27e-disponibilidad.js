@@ -16,9 +16,14 @@ function unirFranjas(lista) {
 const minutosFranjas = lista => (lista || []).reduce((s, f) => s + Math.max(0, aMin(f.hasta) - aMin(f.desde)), 0);
 const franjasTexto = lista => (lista && lista.length ? lista.map(f => `${f.desde}–${f.hasta}`).join(', ') : 'sin franjas');
 const semanaDe = (ctx, id) => (ctx.disponibilidad.get(id) || {}).semana || {};
-const ausencia = (ctx, id, fecha) => { const d = (ctx.ausencias.get(id) || {}).dias; return d && Object.prototype.hasOwnProperty.call(d, fecha) ? d[fecha] : null; };
-// Como `ausencia`, pero contando también las ausencias del equipo cargadas por período
-const noEsta = (ctx, id, fecha) => { const x = ausentesDelDia(ctx, fecha).personas.find(p => p.m.id === id); return x ? x.motivo : null; };
+// Motivo por el que alguien no está ese día, o null si está. Mira las ausencias del equipo (períodos)
+// y los días sueltos que se hayan marcado antes.
+function ausencia(ctx, id, fecha) {
+  const d = (ctx.ausencias.get(id) || {}).dias;
+  if (d && Object.prototype.hasOwnProperty.call(d, fecha)) return d[fecha];
+  const p = ctx.roadmap.periodos.find(p => p.tipo === 'ausencia' && p.desde <= fecha && fecha <= (p.hasta || p.desde) && (miembroDePeriodo(p, ctx.miembros) || {}).id === id);
+  return p ? p.etiqueta || '' : null;
+}
 const fechasDeSemana = lunes => HABILES.map(i => { const d = aFecha(lunes); d.setDate(d.getDate() + i); return isoDe(d); });
 const moverSemana = (lunes, n) => { const d = aFecha(lunes); d.setDate(d.getDate() + 7 * n); return isoDe(d); };
 
@@ -81,7 +86,7 @@ function SemanaEquipo({ ctx, lunes }) {
   const filas = ctx.miembros.map(m => {
     const semana = semanaDe(ctx, m.id);
     const cargo = ctx.disponibilidad.has(m.id);
-    const dias = fechas.map((f, d) => { const aus = noEsta(ctx, m.id, f); return { f, aus, min: aus !== null ? 0 : minutosFranjas(semana[d]), franjas: semana[d] || [] }; });
+    const dias = fechas.map((f, d) => { const aus = ausencia(ctx, m.id, f); return { f, aus, min: aus !== null ? 0 : minutosFranjas(semana[d]), franjas: semana[d] || [] }; });
     const disp = dias.reduce((s, x) => s + x.min, 0);
     const trabajadas = ctx.horas.filter(r => r.miembro === m.id && r.fecha >= lunes && r.fecha <= domingo).reduce((s, r) => s + (r.minutos || 0), 0);
     return { m, cargo, dias, disp, trabajadas };
@@ -117,7 +122,7 @@ function Coincidencias({ ctx, lunes }) {
   const horas = Array.from({ length: hMax - hMin }, (_, i) => hMin + i);
   const total = ctx.miembros.length;
   // Quién está disponible al menos media hora de cada hora
-  const quien = (d, h) => ctx.miembros.filter(m => noEsta(ctx, m.id, fechas[d]) === null && (semanaDe(ctx, m.id)[d] || [])
+  const quien = (d, h) => ctx.miembros.filter(m => ausencia(ctx, m.id, fechas[d]) === null && (semanaDe(ctx, m.id)[d] || [])
     .some(f => Math.min(aMin(f.hasta), (h + 1) * 60) - Math.max(aMin(f.desde), h * 60) >= 30));
   const grilla = HABILES.map(d => horas.map(h => quien(d, h)));
   let mejor = null;
