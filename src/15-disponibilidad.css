@@ -38,23 +38,6 @@
 .mejor-momento .ic { color: var(--blue); margin-top: 2px; }
 .coincidencias .celda-calor { aspect-ratio: auto; height: 26px; }
 
-/* Días no disponibles */
-.aus-grid { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 12px; align-items: start; }
-@media (max-width: 900px) { .aus-grid { grid-template-columns: minmax(0, 1fr); } }
-.panel .cal-cab h3 { margin-right: auto; }
-.cal-mes { font-weight: 500; }
-.aus-celda { min-height: 84px; gap: 6px; }
-.aus-celda.elegible { cursor: pointer; }
-.aus-celda.elegible:hover { background: var(--card-2); }
-.aus-celda.elegible:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-.aus-celda.yo-ausente { background: var(--red-tint); }
-.aus-yo { font-size: 11.5px; font-weight: 600; color: var(--red-text); }
-.aus-celda .avatares > .avatar { box-shadow: 0 0 0 2px var(--card); }
-@media (max-width: 640px) {
-  .aus-celda { min-height: 64px; padding: 4px; }
-  .aus-yo { display: none; }
-  .aus-celda .avatar { width: 16px !important; height: 16px !important; font-size: 8px !important; }
-}
 
 /* ===== Panel de Líder ===== */
 .tabla-lider td.num, .tabla-lider th { white-space: nowrap; }

@@ -176,7 +176,7 @@ function PeriodosRm({ ctx, editable }) {
   };
   return html`<section class="panel ancho">
     <div class="seccion-cab"><h3>Ausencias y feriados del equipo</h3><span class="mono tenue">${lista.length}</span></div>
-    <p class="sub">Períodos largos que afectan la planificación: vacaciones, viajes, fiestas, Carnaval, Turismo. Para días sueltos de cada uno está el calendario «Días no disponibles».</p>
+    <p class="sub">Períodos largos que afectan la planificación: vacaciones, viajes, fiestas, Carnaval, Turismo.</p>
     ${lista.length ? html`<div class="tabla-env"><table class="tabla rm-periodos">
       <thead><tr><th>Descripción</th><th>Tipo</th><th>Desde</th><th>Hasta</th><th>Días</th><th></th></tr></thead>
       <tbody>${lista.map(p => html`<tr key=${p.id} style="cursor:default">
