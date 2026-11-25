@@ -21,7 +21,6 @@ function VistaScrum({ ctx, e, editable, alAbrir, alFiltrar }) {
   const elegido = ctx.sprintsPorId.get(sel) || actual;
   const venc = ctx.tareas.filter(t => !t.archivada && !esHecha(t, ctx) && excepcionVencida(t, ctx.hoy));
   const rotas = ctx.tareas.filter(t => !t.archivada && !esHecha(t, ctx) && sprintDe(t, ctx) && !estadoDoRTarea(t).ok);
-  const sm = nombresConRol(rolSM, ctx), po = nombresConRol(rolPO, ctx);
   const ultimo = ctx.sprints[ctx.sprints.length - 1];
   return html`<div class="vista">
     <div class="vista-cab">
@@ -32,11 +31,14 @@ function VistaScrum({ ctx, e, editable, alAbrir, alFiltrar }) {
       </div>`}
     </div>
     <div class="sc-roles">
-      <span><strong>Scrum Master:</strong> ${sm || html`<span class="tenue">sin asignar</span>`}</span>
-      <span><strong>Product Owner:</strong> ${po || html`<span class="tenue">sin asignar</span>`}</span>
+      ${ROLES_SCRUM.map(r => {
+        const titulares = titularesDe(r.id);
+        const suplen = habilitadosDe(r.id).filter(id => !titulares.includes(id));
+        return html`<span key=${r.id}><strong>${r.nombre}:</strong> ${nombresDe(titulares) || html`<span class="tenue">sin asignar</span>`}${suplen.length > 0 && html` <span class="tenue">(suple hoy: ${nombresDe(suplen)})</span>`}</span>`;
+      })}
       ${!puede && editable && html`<span class="tenue">Solo ellos crean y organizan los sprints.</span>`}
     </div>
-    ${sinRolesScrum() && html`<div class="banner alerta"><${Icono} n="candado" /><span><strong>Falta asignar los roles.</strong> Mientras nadie tenga el rol <em>Scrum Master</em> o <em>Product Owner</em>, cualquiera puede organizar los sprints. Cada uno lo pone en su perfil (Equipo → Rol).</span></div>`}
+    ${sinRolesScrum() && html`<div class="banner alerta"><${Icono} n="candado" /><span><strong>Falta asignar los roles.</strong> Mientras no haya <em>Scrum Master</em> ni <em>Product Owner</em>, cualquiera puede organizar los sprints. Se eligen en Equipo → Roles del proyecto.</span></div>`}
     ${(venc.length > 0 || rotas.length > 0) && html`<div class="banner error"><${Icono} n="candado" /><span>
       ${venc.length > 0 && html`<strong>${venc.length === 1 ? '1 excepción de DoR vencida' : venc.length + ' excepciones de DoR vencidas'}:</strong> ${venc.map((t, i) => html`${i ? ', ' : ' '}<button class="btn-link" onClick=${() => alAbrir(t.id)}>${codigo(t, ctx)}</button>`)}. El faltante no se resolvió a tiempo y el ítem sale del sprint. `}
       ${rotas.length > 0 && html`<strong>Con la DoR incompleta dentro de un sprint:</strong> ${rotas.map((t, i) => html`${i ? ', ' : ' '}<button class="btn-link" onClick=${() => alAbrir(t.id)}>${codigo(t, ctx)}</button>`)}.`}

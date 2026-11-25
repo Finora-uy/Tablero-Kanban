@@ -95,8 +95,9 @@ function VistaResumen({ ctx, alAbrir, alFiltrar }) {
 }
 
 /* ===== Equipo ===== */
-// Quién tiene cada rol del proyecto (se reconoce por lo que dice el campo "Rol" de cada perfil)
-function RolesProyecto({ ctx }) {
+// Quién tiene cada rol del proyecto (se reconoce por lo que dice el campo "Rol" de cada perfil).
+// El Scrum Master, el Product Owner y sus suplentes se eligen acá entre los integrantes.
+function RolesProyecto({ ctx, editable }) {
   return html`<section class="panel roles-proyecto" aria-label="Roles del proyecto">
     <h3>Roles del proyecto</h3>
     <ul class="roles-lista">${ROLES_PROYECTO.map(r => {
@@ -107,7 +108,66 @@ function RolesProyecto({ ctx }) {
           : html`<span class="tenue">Sin asignar</span>`}
       </li>`;
     })}</ul>
+    <div class="roles-scrum">${ROLES_SCRUM.map(r => html`<${RolScrum} key=${r.id} rol=${r} ctx=${ctx} editable=${editable} />`)}</div>
   </section>`;
+}
+
+function RolScrum({ rol, ctx, editable }) {
+  const [agregando, setAgregando] = useState(false);
+  const titulares = titularesDe(rol.id);
+  const suplencias = suplenciasDe(rol.id);
+  const persona = id => { const m = ctx.integrantes.get(id); return html`<span class="rol-persona"><${Avatar} m=${m} t=${22} />${nombreDe(id, ctx)}</span>`; };
+  return html`<div class="rol-scrum">
+    <span class="etiqueta-mono" id=${'rol-' + rol.id}>${rol.nombre}</span>
+    ${editable && ctx.miembros.length > 0
+      ? html`<select class="entrada" aria-labelledby=${'rol-' + rol.id} value=${titulares[0] || ''} onChange=${ev => accionesRoles.elegirTitular(rol.id, ev.target.value)}>
+          <option value="">Sin asignar</option>${ctx.miembros.map(m => html`<option key=${m.id} value=${m.id}>${m.nombre}</option>`)}</select>`
+      : titulares.length ? html`<span class="rol-quien">${titulares.map(persona)}</span>` : html`<span class="tenue">Sin asignar</span>`}
+    <h4>Suplentes</h4>
+    ${suplencias.length ? html`<ul class="rol-suplentes">${suplencias.map(x => {
+      const r = rangoSuplencia(x, ctx.sprints);
+      return html`<li key=${x.id}>
+        ${persona(x.miembro)}
+        <span class="rol-cuando">${textoSuplencia(x)}${r ? ` (${fechaCorta(r.inicio)} – ${fechaCorta(r.fin)})` : x.sprint ? ' (todavía sin fechas)' : ''}</span>
+        ${x.sprint && suplenciaVigente(x, ctx.hoy) ? html`<span class="tag media">Hoy</span>` : null}
+        ${editable && html`<button class="btn-icono chico" aria-label=${`Quitar la suplencia de ${nombreDe(x.miembro, ctx)}: ${textoSuplencia(x)}`} title="Quitar" onClick=${() => accionesRoles.quitarSuplente(x.id)}><${Icono} n="cerrar" t=${13} /></button>`}
+      </li>`;
+    })}</ul>` : html`<span class="tenue">Sin suplentes</span>`}
+    ${editable && ctx.miembros.length > 0 && (agregando
+      ? html`<${FormSuplente} rol=${rol} ctx=${ctx} alCerrar=${() => setAgregando(false)} />`
+      : html`<div><button class="btn btn-chico" onClick=${() => setAgregando(true)}><${Icono} n="mas" t=${14} />Agregar suplente</button></div>`)}
+  </div>`;
+}
+
+function FormSuplente({ rol, ctx, alCerrar }) {
+  const [miembro, setMiembro] = useState('');
+  const [sprint, setSprint] = useState('');
+  const [semana, setSemana] = useState('');
+  const candidatos = ctx.miembros.filter(m => !titularesDe(rol.id).includes(m.id));
+  // Se pueden cargar suplencias de sprints que todavía no se crearon (el plan tiene 4)
+  const numeros = [...new Set([1, 2, 3, 4, ...ctx.sprints.map(s => s.numero)])].sort((a, b) => a - b);
+  const elegido = ctx.sprints.find(s => s.numero === Number(sprint));
+  const semanas = Array.from({ length: elegido ? elegido.semanas : 2 }, (_, i) => i + 1);
+  const id = n => `sup-${n}-${rol.id}`;
+  const enviar = async ev => {
+    ev.preventDefault();
+    if (miembro && await accionesRoles.agregarSuplente(rol.id, miembro, Number(sprint) || null, Number(semana) || null)) alCerrar();
+  };
+  return html`<form class="rol-form" onSubmit=${enviar}>
+    <div class="campo"><label for=${id('quien')}>Quién suple</label>
+      <select class="entrada" id=${id('quien')} value=${miembro} onChange=${ev => setMiembro(ev.target.value)}>
+        <option value="">Elegí un integrante</option>${candidatos.map(m => html`<option key=${m.id} value=${m.id}>${m.nombre}</option>`)}</select></div>
+    <div class="campo"><label for=${id('sprint')}>Cuándo</label>
+      <select class="entrada" id=${id('sprint')} value=${sprint} onChange=${ev => { setSprint(ev.target.value); setSemana(''); }}>
+        <option value="">Siempre que falte el titular</option>${numeros.map(n => html`<option key=${n} value=${String(n)}>Sprint ${n}</option>`)}</select></div>
+    ${sprint && html`<div class="campo"><label for=${id('semana')}>Semana</label>
+      <select class="entrada" id=${id('semana')} value=${semana} onChange=${ev => setSemana(ev.target.value)}>
+        <option value="">El sprint entero</option>${semanas.map(n => html`<option key=${n} value=${String(n)}>Semana ${n}</option>`)}</select></div>`}
+    <div class="fila">
+      <button class="btn btn-primario btn-chico" type="submit" disabled=${!miembro}>Agregar</button>
+      <button class="btn btn-fantasma btn-chico" type="button" onClick=${alCerrar}>Cancelar</button>
+    </div>
+  </form>`;
 }
 
 function VistaEquipo({ ctx, e, editable, alEditar, alVerTareas, alSoyYo }) {
@@ -117,7 +177,7 @@ function VistaEquipo({ ctx, e, editable, alEditar, alVerTareas, alSoyYo }) {
       <div><h2>Equipo</h2><p>Cada uno se suma la primera vez que entra. También podés agregar a alguien que todavía no entró: cuando abra el tablero, elige su nombre.</p></div>
       ${editable && html`<button class="btn btn-primario" onClick=${() => alEditar(null)}><${Icono} n="mas" />Sumar integrante</button>`}
     </div>
-    <${RolesProyecto} ctx=${ctx} />
+    <${RolesProyecto} ctx=${ctx} editable=${editable} />
     ${ctx.miembros.length === 0 && html`<div class="vacio-vista"><${Icono} n="usuarios" t=${28} /><p>Todavía no hay nadie. Sumate primero y después invitá al resto.</p>${editable && html`<button class="btn btn-chico" onClick=${alSoyYo}>Sumarme</button>`}</div>`}
     <div class="equipo">${ctx.miembros.map(m => {
       const suyas = activas.filter(t => (t.asignados || []).includes(m.id));

@@ -1,18 +1,59 @@
 
 /* ===== Scrum: roles, Definition of Ready (DoR), sprints y capacidad ===== */
 
-/* ----- Roles: Scrum Master y Product Owner se reconocen por el rol del integrante ----- */
-const rolSM = m => !!m && normalizar(m.rol).includes('scrum master');
-const rolPO = m => !!m && normalizar(m.rol).includes('product owner');
-const hayRol = f => [...estado.integrantes.values()].some(f);
-const esSM = () => rolSM(estado.integrantes.get(yo()));
-const esPO = () => rolPO(estado.integrantes.get(yo()));
-// Mientras nadie tenga el rol asignado en Equipo, no se bloquea a nadie (si no, el tablero quedaría trabado)
-const sinRolesScrum = () => !hayRol(m => rolSM(m) || rolPO(m));
+/* ----- Roles: el Scrum Master, el Product Owner y sus suplentes se eligen en Equipo → Roles del proyecto ----- */
+// Se guardan en scrum/roles: { sm, po, suplencias: [{ id, rol, miembro, sprint, semana }] }
+// sprint null = suple en cualquier momento; semana null = el sprint entero
+const ROLES_SCRUM = [{ id: 'sm', nombre: 'Scrum Master', clave: 'scrum master' }, { id: 'po', nombre: 'Product Owner', clave: 'product owner' }];
+const rolesScrumGuardados = () => estado.scrum.get('roles') || {};
+// El titular es el elegido en Equipo. Si nunca se eligió, vale lo que diga el campo «Rol» de cada perfil.
+function titularesDe(rol) {
+  const g = rolesScrumGuardados();
+  if (g[rol] !== undefined) return estado.integrantes.has(g[rol]) ? [g[rol]] : [];
+  const clave = ROLES_SCRUM.find(r => r.id === rol).clave;
+  return [...estado.integrantes].filter(([, m]) => normalizar(m.rol).includes(clave)).map(([id]) => id);
+}
+const suplenciasDe = rol => (rolesScrumGuardados().suplencias || []).filter(x => x.rol === rol && estado.integrantes.has(x.miembro))
+  .sort((a, b) => (a.sprint || 0) - (b.sprint || 0) || (a.semana || 0) - (b.semana || 0));
+// Fechas que cubre una suplencia: null si es permanente o si su sprint (o esa semana) todavía no existe
+function rangoSuplencia(x, sprints = armarSprints(estado.sprints)) {
+  const s = x.sprint && sprints.find(y => y.numero === x.sprint);
+  if (!s || (x.semana && x.semana > s.semanas)) return null;
+  if (!x.semana) return { inicio: s.inicio, fin: s.fin };
+  const inicio = sumarDias(s.inicio, (x.semana - 1) * 7);
+  return { inicio, fin: sumarDias(inicio, 6) };
+}
+function suplenciaVigente(x, hoy = hoyISO()) {
+  if (!x.sprint) return true;
+  const r = rangoSuplencia(x);
+  return !!r && r.inicio <= hoy && hoy <= r.fin;
+}
+const textoSuplencia = x => !x.sprint ? 'Siempre que falte el titular' : `Sprint ${x.sprint}${x.semana ? ', semana ' + x.semana : ', entero'}`;
+// Quiénes pueden actuar hoy con ese rol: el titular y los suplentes vigentes
+const habilitadosDe = rol => [...new Set([...titularesDe(rol), ...suplenciasDe(rol).filter(x => suplenciaVigente(x)).map(x => x.miembro)])];
+const nombresDe = ids => ids.map(id => (estado.integrantes.get(id) || {}).nombre).filter(Boolean).join(', ');
+const hayRol = rol => titularesDe(rol).length > 0;
+const esSM = () => habilitadosDe('sm').includes(yo());
+const esPO = () => habilitadosDe('po').includes(yo());
+// Mientras no haya titulares, no se bloquea a nadie (si no, el tablero quedaría trabado)
+const sinRolesScrum = () => !hayRol('sm') && !hayRol('po');
 const puedeGestionarScrum = () => esSM() || esPO() || sinRolesScrum();
-const puedeMarcarListo = () => esPO() || !hayRol(rolPO);
-const puedeAprobarExcepcion = rol => rol === 'sm' ? (esSM() || !hayRol(rolSM)) : (esPO() || !hayRol(rolPO));
-const nombresConRol = (f, ctx) => ctx.miembros.filter(f).map(m => m.nombre).join(', ');
+const puedeMarcarListo = () => esPO() || !hayRol('po');
+const puedeAprobarExcepcion = rol => rol === 'sm' ? (esSM() || !hayRol('sm')) : (esPO() || !hayRol('po'));
+
+const accionesRoles = {
+  guardar(cambios) {
+    return conManejo(estado.scrum.has('roles') ? backend.actualizar('scrum/roles', cambios) : backend.crear('scrum/roles', cambios));
+  },
+  elegirTitular(rol, miembro) { return this.guardar({ [rol]: miembro || null }); },
+  agregarSuplente(rol, miembro, sprint, semana) {
+    if (titularesDe(rol).includes(miembro)) { avisar('Esa persona ya es titular del rol: elegí a otra como suplente.', 'error'); return Promise.resolve(false); }
+    const lista = rolesScrumGuardados().suplencias || [];
+    if (lista.some(x => x.rol === rol && x.miembro === miembro && x.sprint === sprint && x.semana === semana)) { avisar('Esa suplencia ya está cargada.', 'error'); return Promise.resolve(false); }
+    return this.guardar({ suplencias: [...lista, { id: uid(), rol, miembro, sprint, semana }] });
+  },
+  quitarSuplente(id) { return this.guardar({ suplencias: (rolesScrumGuardados().suplencias || []).filter(x => x.id !== id) }); },
+};
 
 /* ----- Criterios de la DoR (v1.1, FIN-67) ----- */
 // manual: se tilda en la tarea · auto: se comprueba sola con los datos de la tarea · los dos: hacen falta ambos
@@ -92,7 +133,7 @@ const esTareaScrum = t => (t.etiquetas || []).some(x => x === 'scrum' || ES_ID_S
 function motivoListoBloqueado(t) {
   if (!esTareaScrum(t)) return null;
   if (!puedeMarcarListo()) {
-    const po = [...estado.integrantes.values()].filter(rolPO).map(m => m.nombre).join(', ');
+    const po = nombresDe(habilitadosDe('po'));
     return `Solo el Product Owner${po ? ' (' + po + ')' : ''} puede pasar una tarea a Listo.`;
   }
   const ev = evaluarDoR(t);

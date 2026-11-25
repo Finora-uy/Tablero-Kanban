@@ -158,7 +158,8 @@ Cada aviso se procesa una sola vez (se anota en `github_entregas`). Si uno fall�
 
 La pestaña **Scrum** tiene el calendario del 13/12 al 14/02, los sprints y la planificación. No hace falta tocar la base de datos: los sprints se guardan como un documento más.
 
-- **Roles:** el Scrum Master y el Product Owner se reconocen por el **Rol** del perfil (Equipo → editar perfil): tiene que decir `Scrum Master` o `Product Owner` (puede combinarse con otro rol, por ejemplo «Gerente de proyecto, Scrum Master»). Hasta que alguien tenga el rol, no se bloquea a nadie. Es una regla de la pantalla: la base de datos solo distingue «del equipo» o no.
+- **Roles:** el Scrum Master y el Product Owner se eligen entre los integrantes en **Equipo → Roles del proyecto**. Mientras no se haya elegido nada, sigue valiendo lo que diga el **Rol** del perfil. Hasta que haya alguien en el rol, no se bloquea a nadie. Es una regla de la pantalla: la base de datos solo distingue «del equipo» o no.
+- **Suplentes:** en el mismo panel, cada rol puede tener varios. Una suplencia vale *siempre que falte el titular* o solo en un sprint (entero o una semana). El suplente tiene los permisos del rol en esas fechas (el titular no los pierde). Las de un sprint que todavía no se creó empiezan a valer cuando se crea.
 - **Sprints:** arrancan el lunes 14/12 y van uno a continuación del otro. El SM o el PO los crean (hay un botón para los 4 de 2 semanas) y eligen cuántas semanas dura cada uno. Al crear «Sprint N» aparecen solas su **etiqueta** y su **etapa** (esta última sirve para cargar horas). No se editan en Ajustes: se borran borrando el sprint, que no puede tener tareas.
 - **Ceremonias en el calendario:** planificación y refinamiento 1 el primer día; refinamiento 2 (SM y PO) a mitad del sprint; revisión y retrospectiva el último viernes.
 - **Columna «Listo»:** va entre «Por hacer» y «En curso». Solo el PO pasa una tarea ahí, y solo si cumple la DoR.

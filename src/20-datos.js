@@ -92,8 +92,6 @@ const ROLES_PROYECTO = [
   { nombre: 'Ingeniería de requerimientos', clave: 'requerimientos' },
   { nombre: 'SQA', clave: 'sqa' },
   { nombre: 'SCM', clave: 'scm' },
-  { nombre: 'Scrum Master', clave: 'scrum master' },
-  { nombre: 'Product Owner', clave: 'product owner' },
 ];
 const ROLES = ROLES_PROYECTO.map(r => r.nombre);
 const ESTIMACIONES = [1, 2, 3, 5, 8, 13];
@@ -219,8 +217,8 @@ const estado = {
   config: null,
   integrantes: new Map(), tareas: new Map(), comentarios: new Map(), hitos: new Map(),
   horas: new Map(), cronometros: new Map(), disponibilidad: new Map(), ausencias: new Map(), fechas: new Map(),
-  roadmap: new Map(), roadmapFases: new Map(), roadmapItems: new Map(), roadmapPeriodos: new Map(), notas: new Map(), sprints: new Map(),
-  cargado: { sprints: false, notas: false, config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false, roadmap: false, roadmapFases: false, roadmapItems: false, roadmapPeriodos: false },
+  roadmap: new Map(), roadmapFases: new Map(), roadmapItems: new Map(), roadmapPeriodos: new Map(), notas: new Map(), sprints: new Map(), scrum: new Map(),
+  cargado: { scrum: false, sprints: false, notas: false, config: false, integrantes: false, tareas: false, comentarios: false, hitos: false, horas: false, cronometros: false, disponibilidad: false, ausencias: false, fechas: false, roadmap: false, roadmapFases: false, roadmapItems: false, roadmapPeriodos: false },
   puedeEscribir: null, userId: null, yoId: leer('finora-yo'),
   pares: [], room: null, descargas: null,
   errorConexion: false, avisos: [],

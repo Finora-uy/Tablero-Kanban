@@ -7,3 +7,6 @@ finora-tablero.html
 .claude/settings.local.json
 docs/guia/demo-*.html
 roadmap-finora.json
+
+# Carga de roles Scrum (tiene nombres)
+scrum-roles.sql
