@@ -263,12 +263,54 @@ function ceremoniasSprint(s) {
 
 /* ----- Capacidad y avance de un sprint ----- */
 const esFeriado = (ctx, iso) => ctx.roadmap.periodos.some(p => p.tipo === 'feriado' && p.desde <= iso && iso <= (p.hasta || p.desde));
+// Las ausencias del Roadmap no guardan la persona: se reconoce por el nombre o apellido que diga la descripción.
+// Si coincide con más de una por igual (o con nadie), devuelve null.
+function miembroDePeriodo(p, miembros) {
+  const palabras = t => normalizar(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
+  const texto = palabras(p.etiqueta);
+  let mejor = null, max = 0, empate = false;
+  for (const m of miembros) {
+    const nombre = palabras(m.nombre);
+    let puntos = 0;
+    nombre.forEach((n, i) => {
+      const en = n.length >= 3 ? texto.indexOf(n) : -1;
+      if (en < 0) return;
+      puntos += 2;
+      // «Tomás C.»: la inicial del apellido desempata
+      const sig = texto[en + 1];
+      if (sig && sig.length === 1 && nombre[i + 1] && nombre[i + 1][0] === sig) puntos += 1;
+    });
+    if (puntos > max) { mejor = m; max = puntos; empate = false; } else if (puntos && puntos === max) empate = true;
+  }
+  return empate ? null : mejor;
+}
+// Quiénes no están un día: lo cargado en Disponibilidad más las ausencias del Roadmap
+function ausentesDelDia(ctx, iso) {
+  const personas = new Map(), sueltas = [];
+  for (const m of ctx.miembros) {
+    const motivo = ausencia(ctx, m.id, iso);
+    if (motivo !== null) personas.set(m.id, { m, motivo: typeof motivo === 'string' ? motivo : '' });
+  }
+  for (const p of ctx.roadmap.periodos) {
+    if (p.tipo !== 'ausencia' || !(p.desde <= iso && iso <= (p.hasta || p.desde))) continue;
+    const m = miembroDePeriodo(p, ctx.miembros);
+    if (!m) sueltas.push(p.etiqueta);
+    else if (!personas.has(m.id)) personas.set(m.id, { m, motivo: p.etiqueta });
+  }
+  return { personas: [...personas.values()], sueltas };
+}
+// El primer nombre; si se repite en el equipo, con la inicial que sigue
+function nombreCorto(m, miembros) {
+  const [uno, dos] = m.nombre.trim().split(/\s+/);
+  const repetido = miembros.some(x => x.id !== m.id && normalizar(x.nombre.trim().split(/\s+/)[0]) === normalizar(uno));
+  return repetido && dos ? `${uno} ${dos[0]}.` : uno;
+}
 function capacidadSprint(s, ctx) {
   const personas = ctx.miembros.map(m => {
     let min = 0;
     for (let d = s.inicio; d <= s.fin; d = sumarDias(d, 1)) {
       const dow = (aFecha(d).getDay() + 6) % 7;
-      if (dow > 4 || esFeriado(ctx, d) || ausencia(ctx, m.id, d) !== null) continue;
+      if (dow > 4 || esFeriado(ctx, d) || ausentesDelDia(ctx, d).personas.some(x => x.m.id === m.id)) continue;
       min += minutosFranjas(semanaDe(ctx, m.id)[dow]);
     }
     return { m, horas: min / 60 };

@@ -73,7 +73,7 @@ function CalendarioScrum({ ctx }) {
     const fuera = iso < SCRUM.desde || iso > SCRUM.hasta;
     const margen = !s && !fuera && ultimoFin && iso > ultimoFin;
     const feriado = !fuera && esFeriado(ctx, iso);
-    const ausentes = fuera ? 0 : ctx.miembros.filter(m => ausencia(ctx, m.id, iso) !== null).length;
+    const aus = fuera ? { personas: [], sueltas: [] } : ausentesDelDia(ctx, iso);
     const etiquetaSprint = s && (iso === s.inicio || dow === 0) ? `${s.corto} · sem. ${Math.floor(diasEntre(s.inicio, iso) / 7) + 1}/${s.semanas}` : null;
     celdas.push(html`<div key=${iso} class=${'sc-dia' + (fuera ? ' fuera' : '') + (iso === ctx.hoy ? ' hoy' : '') + (s ? ' en-sprint' : '') + (margen ? ' margen' : '') + (dow > 4 ? ' finde' : '')}
         style=${s ? `--sp:var(--c-${s.color})` : ''}>
@@ -83,7 +83,8 @@ function CalendarioScrum({ ctx }) {
       ${(ceremonias.get(iso) || []).map(c => html`<span key=${c.id} class=${'sc-cer ' + c.id} title=${`${c.sprint.nombre}: ${c.nombre}`}>${c.corto}</span>`)}
       ${(hitos.get(iso) || []).map(x => html`<span key=${x.id} class="sc-hito" title=${'Hito: ' + x.nombre}><${Icono} n="bandera" t=${11} />${x.nombre}</span>`)}
       ${(fechas.get(iso) || []).map(x => html`<span key=${x.id} class="sc-fecha" title=${x.titulo}><${Icono} n="estrella" t=${11} />${x.titulo}</span>`)}
-      ${ausentes > 0 && html`<span class="sc-aus" title=${`${ausentes} ${ausentes === 1 ? 'persona no está' : 'personas no están'} este día`}>${ausentes} ausente${ausentes === 1 ? '' : 's'}</span>`}
+      ${aus.personas.map(x => html`<span key=${x.m.id} class="sc-aus" title=${x.m.nombre + (x.motivo ? ': ' + x.motivo : '')}>${nombreCorto(x.m, ctx.miembros)} ausente</span>`)}
+      ${aus.sueltas.map(t => html`<span class="sc-aus" title="Ausencia del Roadmap">${t}</span>`)}
     </div>`);
   }
   return html`<section class="seccion">
