@@ -263,7 +263,7 @@ function ceremoniasSprint(s) {
 
 /* ----- Capacidad y avance de un sprint ----- */
 const esFeriado = (ctx, iso) => ctx.roadmap.periodos.some(p => p.tipo === 'feriado' && p.desde <= iso && iso <= (p.hasta || p.desde));
-// Las ausencias del Roadmap no guardan la persona: se reconoce por el nombre o apellido que diga la descripción.
+// Las ausencias del equipo (períodos) no guardan la persona: se reconoce por el nombre o apellido que diga la descripción.
 // Si coincide con más de una por igual (o con nadie), devuelve null.
 function miembroDePeriodo(p, miembros) {
   const palabras = t => normalizar(t).split(/[^a-z0-9ñ]+/).filter(Boolean);
@@ -284,7 +284,7 @@ function miembroDePeriodo(p, miembros) {
   }
   return empate ? null : mejor;
 }
-// Quiénes no están un día: lo cargado en Disponibilidad más las ausencias del Roadmap
+// Quiénes no están un día: lo cargado en Disponibilidad más las ausencias del equipo
 function ausentesDelDia(ctx, iso) {
   const personas = new Map(), sueltas = [];
   for (const m of ctx.miembros) {

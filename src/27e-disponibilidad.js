@@ -281,6 +281,7 @@ function VistaDisponibilidad({ ctx, editable }) {
         <${CalendarioAusencias} ctx=${ctx} editable=${editable} alElegir=${setEligiendo} />
         <${ProximasAusencias} ctx=${ctx} />
       </div>
+      <${PeriodosRm} ctx=${ctx} editable=${editable} />
     </div>
     ${eligiendo && html`<${ModalAusencia} ctx=${ctx} fecha=${eligiendo} alCerrar=${() => setEligiendo(null)} />`}
   </div>`;

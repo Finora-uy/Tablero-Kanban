@@ -84,7 +84,7 @@ function CalendarioScrum({ ctx }) {
       ${(hitos.get(iso) || []).map(x => html`<span key=${x.id} class="sc-hito" title=${'Hito: ' + x.nombre}><${Icono} n="bandera" t=${11} />${x.nombre}</span>`)}
       ${(fechas.get(iso) || []).map(x => html`<span key=${x.id} class="sc-fecha" title=${x.titulo}><${Icono} n="estrella" t=${11} />${x.titulo}</span>`)}
       ${aus.personas.map(x => html`<span key=${x.m.id} class="sc-aus" title=${x.m.nombre + (x.motivo ? ': ' + x.motivo : '')}>${nombreCorto(x.m, ctx.miembros)} ausente</span>`)}
-      ${aus.sueltas.map(t => html`<span class="sc-aus" title="Ausencia del Roadmap">${t}</span>`)}
+      ${aus.sueltas.map(t => html`<span class="sc-aus" title="Ausencia del equipo">${t}</span>`)}
     </div>`);
   }
   return html`<section class="seccion">

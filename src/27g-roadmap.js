@@ -1,5 +1,5 @@
 
-/* ===== Roadmap: fases del proyecto hasta la entrega, con tareas, hitos, ausencias y feriados ===== */
+/* ===== Roadmap: fases del proyecto hasta la entrega, con tareas e hitos ===== */
 const ESTADOS_RM = [['pendiente', 'Pendiente'], ['en-curso', 'En curso'], ['hecho', 'Hecho'], ['bloqueado', 'Bloqueado']];
 const ESTADO_RM = Object.fromEntries(ESTADOS_RM);
 const ROLES_RM = ['Todos', 'Gerente de proyecto', 'Arquitecto', 'SQA', 'SCM', 'Ingeniería de requerimientos', 'Documentación', 'Tutor'];
@@ -161,7 +161,7 @@ function ModalMetaRm({ ctx, alCerrar }) {
   <//>`;
 }
 
-/* ----- Ausencias y feriados ----- */
+/* ----- Ausencias y feriados (se muestran al final de Disponibilidad) ----- */
 function PeriodosRm({ ctx, editable }) {
   const lista = ctx.roadmap.periodos;
   const cambiar = (p, campo, valor) => {
@@ -176,7 +176,7 @@ function PeriodosRm({ ctx, editable }) {
   };
   return html`<section class="panel ancho">
     <div class="seccion-cab"><h3>Ausencias y feriados del equipo</h3><span class="mono tenue">${lista.length}</span></div>
-    <p class="sub">Períodos largos que afectan la planificación: vacaciones, viajes, fiestas, Carnaval, Turismo. Para días sueltos de cada uno está la pestaña Disponibilidad.</p>
+    <p class="sub">Períodos largos que afectan la planificación: vacaciones, viajes, fiestas, Carnaval, Turismo. Para días sueltos de cada uno está el calendario «Días no disponibles».</p>
     ${lista.length ? html`<div class="tabla-env"><table class="tabla rm-periodos">
       <thead><tr><th>Descripción</th><th>Tipo</th><th>Desde</th><th>Hasta</th><th>Días</th><th></th></tr></thead>
       <tbody>${lista.map(p => html`<tr key=${p.id} style="cursor:default">
@@ -304,7 +304,7 @@ function VistaRoadmap({ ctx, editable, alModal }) {
 
   if (!rm.fases.length) {
     return html`<div class="vista">
-      <div class="vista-cab"><div><h2>Roadmap</h2><p>El camino del proyecto hasta la entrega: fases, tareas, hitos, ausencias y feriados.</p></div></div>
+      <div class="vista-cab"><div><h2>Roadmap</h2><p>El camino del proyecto hasta la entrega: fases, tareas e hitos.</p></div></div>
       <div class="vacio-vista"><${Isotipo} t=${40} />
         <p>Todavía no hay roadmap. Agregá la primera fase, o importá un roadmap guardado desde <strong>Ajustes → Respaldo</strong>.</p>
         ${editable && html`<div class="fila" style="justify-content:center">
@@ -380,7 +380,6 @@ function VistaRoadmap({ ctx, editable, alModal }) {
         ${editable && html`<button class="rm-col rm-nueva" onClick=${() => setFase({})}><span class="rm-cab">+ Nueva</span><span class="rm-cuerpo"><${Icono} n="mas" t=${28} />Agregar fase</span></button>`}
       </div>
     </div>
-    <${PeriodosRm} ctx=${ctx} editable=${editable} />
     ${rm.meta && rm.meta.nota && html`<p class="tenue">${rm.meta.nota}</p>`}
     ${modales}
   </div>`;
