@@ -74,7 +74,7 @@ function CalendarioScrum({ ctx }) {
     const margen = !s && !fuera && ultimoFin && iso > ultimoFin;
     const feriado = !fuera && esFeriado(ctx, iso);
     const ausentes = fuera ? 0 : ctx.miembros.filter(m => ausencia(ctx, m.id, iso) !== null).length;
-    const etiquetaSprint = s && (iso === s.inicio || dow === 0) ? `${s.nombre} · sem. ${Math.floor(diasEntre(s.inicio, iso) / 7) + 1}/${s.semanas}` : null;
+    const etiquetaSprint = s && (iso === s.inicio || dow === 0) ? `${s.corto} · sem. ${Math.floor(diasEntre(s.inicio, iso) / 7) + 1}/${s.semanas}` : null;
     celdas.push(html`<div key=${iso} class=${'sc-dia' + (fuera ? ' fuera' : '') + (iso === ctx.hoy ? ' hoy' : '') + (s ? ' en-sprint' : '') + (margen ? ' margen' : '') + (dow > 4 ? ' finde' : '')}
         style=${s ? `--sp:var(--c-${s.color})` : ''}>
       <div class="sc-num"><span>${d.getDate()}</span>${(d.getDate() === 1 || i === 0) && html`<span class="sc-mes">${MESES_CORTOS[d.getMonth()]}</span>`}${feriado && html`<span class="sc-feriado" title="Feriado">feriado</span>`}</div>
@@ -112,12 +112,13 @@ function SprintsResumen({ ctx, puede, sel, alElegir, alFiltrar }) {
       const sobre = velPrev > 0 && r.puntos > velPrev;
       return html`<article key=${s.id} class=${'sc-sprint' + (sel === s.id ? ' elegido' : '')} style=${`--sp:var(--c-${s.color})`}>
         <header>
-          <h4><button class="btn-link" aria-pressed=${sel === s.id} onClick=${() => alElegir(s.id)} title="Ver su avance">${s.nombre}</button></h4>
+          <h4><button class="btn-link" aria-pressed=${sel === s.id} onClick=${() => alElegir(s.id)} title="Ver su avance">${s.corto}</button></h4>
           ${puede ? html`<select class="entrada" id=${'sc-sem-' + s.id} style="width:auto;height:28px;min-height:28px;padding-block:2px" aria-label=${'Semanas de ' + s.nombre} value=${String(s.semanas)} onChange=${ev => accionesScrum.cambiarSemanas(s.id, Number(ev.target.value))}>
               ${[1, 2, 3, 4].map(n => html`<option value=${String(n)}>${n} semana${n === 1 ? '' : 's'}</option>`)}</select>`
             : html`<span class="tag baja">${s.semanas} semana${s.semanas === 1 ? '' : 's'}</span>`}
         </header>
         <p class="sc-fechas">${fechaLarga(s.inicio)} – ${fechaLarga(s.fin)}${s.fuera ? ' · se pasa del calendario' : ''}</p>
+        <${TituloSprint} s=${s} puede=${puede} />
         <${ObjetivoSprint} s=${s} puede=${puede} />
         <dl class="sc-datos">
           <div><dt>Tareas</dt><dd>${r.hechas.length}/${r.tareas.length} hechas</dd></div>
@@ -136,6 +137,11 @@ function SprintsResumen({ ctx, puede, sel, alElegir, alFiltrar }) {
       </article>`;
     })}</div>
   </section>`;
+}
+function TituloSprint({ s, puede }) {
+  const titulo = useBorrador(s.titulo, v => { if (v.trim() !== s.titulo) accionesScrum.guardarTitulo(s.id, v.trim()); });
+  if (!puede) return s.titulo ? html`<p class="sc-titulo">${s.titulo}</p>` : null;
+  return html`<input class="entrada sc-titulo" id=${'sc-tit-' + s.id} type="text" maxlength="60" aria-label=${'Título de ' + s.corto} placeholder="Título del sprint (opcional)" ...${titulo} />`;
 }
 function ObjetivoSprint({ s, puede }) {
   const obj = useBorrador(s.objetivo || '', v => { if (v !== (s.objetivo || '')) accionesScrum.guardarObjetivo(s.id, v); });

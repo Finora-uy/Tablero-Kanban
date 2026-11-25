@@ -185,6 +185,7 @@ const accionesScrum = {
     if (pasado) { avisar(`Con ${semanas} semana${semanas === 1 ? '' : 's'} el ${pasado.nombre} terminaría el ${fechaLarga(pasado.fin)}, después del fin del calendario (${fechaLarga(SCRUM.hasta)}). Achicá algún sprint antes.`, 'error'); notificar(); return false; }
     return conManejo(backend.actualizar('sprints/' + id, { semanas }));
   },
+  guardarTitulo(id, titulo) { return conManejo(backend.actualizar('sprints/' + id, { titulo })); },
   guardarObjetivo(id, objetivo) { return conManejo(backend.actualizar('sprints/' + id, { objetivo })); },
   async borrarSprint(id) {
     if (!puedeGestionarScrum()) { avisar('Solo el Scrum Master o el Product Owner pueden borrar sprints.', 'error'); return false; }

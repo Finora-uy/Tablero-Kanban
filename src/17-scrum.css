@@ -37,6 +37,7 @@
 .sc-sprint h4 { font: 600 16px/1.2 var(--f-titulo); letter-spacing: -.01em; }
 .sc-sprint h4 .btn-link { font: inherit; color: var(--text); }
 .sc-fechas { font-size: 12.5px; color: var(--text-2); }
+.sc-titulo { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .sc-objetivo { font-size: 13.5px; }
 .sc-sprint textarea { min-height: 52px; font-size: 13px; }
 .sc-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 0; }

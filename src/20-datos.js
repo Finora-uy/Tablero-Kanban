@@ -118,7 +118,9 @@ function armarSprints(mapa) {
     const semanas = Math.min(4, Math.max(1, Number(s.semanas) || 2));
     const inicio = cursor, fin = sumarDias(inicio, semanas * 7 - 1);
     cursor = sumarDias(fin, 1);
-    return { ...s, semanas, inicio, fin, nombre: `Sprint ${s.numero}`, color: SPRINT_COLORES[(s.numero - 1) % SPRINT_COLORES.length], fuera: fin > SCRUM.hasta };
+    // `corto` es «Sprint N»; `nombre` le suma el título, si tiene
+    const corto = `Sprint ${s.numero}`, titulo = (s.titulo || '').trim();
+    return { ...s, semanas, inicio, fin, titulo, corto, nombre: titulo ? `${corto}: ${titulo}` : corto, color: SPRINT_COLORES[(s.numero - 1) % SPRINT_COLORES.length], fuera: fin > SCRUM.hasta };
   });
 }
 const CARRILES = [
