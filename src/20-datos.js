@@ -192,6 +192,19 @@ function armarEtapas(guardados) {
   const base = guardados.filter(x => !ETAPAS_FIJAS.some(f => f.id === x.id));
   return [...base, ...ETAPAS_FIJAS.map(f => ({ ...f, ...(guardados.find(x => x.id === f.id) || {}), fijo: true }))];
 }
+// En Horas la etapa sale de las etiquetas de la tarea. Si la etiqueta se llama igual que una etapa (o es un sprint)
+// se usa esa etapa; si no, la etiqueta cuenta como etapa propia. «Scrum» solo marca la tarea, no es una etapa.
+const nombreIgual = (a, b) => (a || '').trim().toLocaleLowerCase('es') === (b || '').trim().toLocaleLowerCase('es');
+function etapaDeEtiqueta(etiqueta, etapas) {
+  const igual = etapas.find(x => (etiqueta.sprint ? x.id === etiqueta.id : nombreIgual(x.nombre, etiqueta.nombre)));
+  return igual ? igual.id : 'etq:' + etiqueta.id;
+}
+// Las etapas posibles de una tarea, en orden de preferencia: primero sus etiquetas, al final el sprint.
+// Cada registro de horas lleva una sola, así una hora trabajada se cuenta una sola vez.
+function etapasDeTarea(t, etiquetas, etapas) {
+  const propias = ((t && t.etiquetas) || []).map(id => etiquetas.find(x => x.id === id)).filter(x => x && x.id !== 'scrum');
+  return [...new Set([...propias.filter(x => !x.sprint), ...propias.filter(x => x.sprint)].map(x => etapaDeEtiqueta(x, etapas)))];
+}
 // La columna «Listo» (la tarea cumple la DoR) está siempre, aunque la config guardada sea anterior: va antes de «En curso»
 // La etiqueta «Scrum» también está siempre: solo las tareas que la llevan (o están en un sprint) tienen que cumplir la DoR
 function asegurarScrum(cfg) {
@@ -400,10 +413,14 @@ function armarContexto(e) {
   // Sprints: cada uno trae su etiqueta y su etapa (mismo id), sin guardarlas en la config
   const sprints = armarSprints(e.sprints);
   const etapasBase = armarEtapas(config.etapas);
-  const etapas = [...etapasBase.filter(x => !x.fijo), ...sprints.map(s => ({ id: s.id, nombre: s.nombre, color: s.color, sprint: true })), ...etapasBase.filter(x => x.fijo)];
+  const etapasPropias = [...etapasBase.filter(x => !x.fijo), ...sprints.map(s => ({ id: s.id, nombre: s.nombre, color: s.color, sprint: true })), ...etapasBase.filter(x => x.fijo)];
   const etiquetasTodas = [...(config.etiquetas || []), ...sprints.map(s => ({ id: s.id, nombre: s.nombre, color: s.color, sprint: true }))];
+  const etapasEtiqueta = (config.etiquetas || []).filter(x => x.id !== 'scrum' && etapaDeEtiqueta(x, etapasPropias).startsWith('etq:'))
+    .map(x => ({ id: 'etq:' + x.id, nombre: x.nombre, color: x.color, deEtiqueta: true }));
+  const etapas = [...etapasPropias.filter(x => !x.fijo), ...etapasEtiqueta, ...etapasPropias.filter(x => x.fijo)];
   const trabajos = armarTrabajos(config.trabajos, e.horas);
-  const horas = [...e.horas].map(([id, r]) => ({ ...r, id })).filter(r => r.inicio && r.fin && r.miembro);
+  // Un registro sin etapa toma la de su tarea (también los cargados antes)
+  const horas = [...e.horas].map(([id, r]) => ({ ...r, id, etapa: r.etapa || (r.tarea && etapasDeTarea(porId.get(r.tarea), etiquetasTodas, etapas)[0]) || null })).filter(r => r.inicio && r.fin && r.miembro);
   const horasPorTarea = new Map();
   for (const r of horas) if (r.tarea) horasPorTarea.set(r.tarea, (horasPorTarea.get(r.tarea) || 0) + (r.minutos || 0));
   // Fases del Roadmap, para elegir a cuál pertenece cada tarea

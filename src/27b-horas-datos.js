@@ -47,12 +47,22 @@ function useReloj(activo) {
 }
 
 /* ----- Acciones ----- */
+function etapasPosibles(tareaId) {
+  if (!tareaId) return [];
+  const ctx = armarContexto(estado);
+  return etapasDeTarea(ctx.porId.get(tareaId), ctx.etiquetas, ctx.etapas);
+}
+// Cambios al elegir una tarea: la etapa pasa a ser la de su etiqueta (una reunión sigue siendo reunión)
+function elegirTarea(tarea, valor) {
+  const etapa = etapasPosibles(tarea)[0];
+  return etapa && valor.etapa !== 'reunion' ? { tarea, etapa } : { tarea };
+}
 function armarRegistro(r) {
   const ini = new Date(r.inicio), fin = new Date(r.fin);
   return {
     miembro: r.miembro, inicio: ini.toISOString(), fin: fin.toISOString(),
     minutos: Math.max(0, Math.round((fin - ini) / 60000)), fecha: isoDe(ini),
-    etapa: r.etapa || null, trabajo: r.trabajo || null, tarea: r.tarea || null,
+    etapa: r.etapa || etapasPosibles(r.tarea)[0] || null, trabajo: r.trabajo || null, tarea: r.tarea || null,
     descripcion: (r.descripcion || '').trim(),
   };
 }
@@ -92,7 +102,7 @@ const accionesHoras = {
     if (!yoId) { avisar('Sumate al tablero (menú de tu perfil) para cargar horas.', 'error'); return false; }
     if (estado.cronometros.has(yoId)) await accionesHoras.detener();
     const ok = await conManejo(backend.crear('cronometros/' + yoId, {
-      inicio: ahoraISO(), descripcion: (datos.descripcion || '').trim(), etapa: datos.etapa || null,
+      inicio: ahoraISO(), descripcion: (datos.descripcion || '').trim(), etapa: datos.etapa || etapasPosibles(datos.tarea)[0] || null,
       trabajo: datos.trabajo || null, tarea: datos.tarea || null, tareasExtra: datos.tareasExtra || [], userId: estado.userId || null,
     }));
     if (ok) tareasDelCrono(datos).forEach(pasarAEnCurso);
@@ -132,7 +142,10 @@ const accionesHoras = {
     let acumulado = 0, guardadas = 0;
     for (let i = 0; i < n; i++) {
       const dur = base + (i < resto ? 1 : 0);
-      const r = { ...c, tarea: tareas[i], miembro: yoId, inicio: new Date(ini + acumulado * 60000).toISOString(), fin: new Date(ini + (acumulado + dur) * 60000).toISOString() };
+      // Si la etapa elegida salió de las etiquetas de la primera tarea, cada una de las otras usa la suya
+      const propias = etapasPosibles(tareas[i]);
+      const heredada = i > 0 && propias.length && !propias.includes(c.etapa) && etapasPosibles(tareas[0]).includes(c.etapa);
+      const r = { ...c, etapa: heredada ? propias[0] : c.etapa, tarea: tareas[i], miembro: yoId, inicio: new Date(ini + acumulado * 60000).toISOString(), fin: new Date(ini + (acumulado + dur) * 60000).toISOString() };
       acumulado += dur;
       if (await accionesHoras.crear(r, { silencioso: true })) guardadas++;
     }

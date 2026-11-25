@@ -133,7 +133,7 @@ function ModalHito({ ctx, id, alCerrar }) {
 function ModalAjustes({ ctx, alCerrar, seccionInicial = 'columnas' }) {
   const [sec, setSec] = useState(seccionInicial);
   // Las etapas y trabajos pueden no estar guardados todavía: se parte de lo que se ve en pantalla
-  const [inicial] = useState(() => JSON.stringify({ ...ctx.config, etapas: ctx.etapas.filter(x => !x.sprint), trabajos: ctx.trabajos.filter(x => !x.legado) }));
+  const [inicial] = useState(() => JSON.stringify({ ...ctx.config, etapas: ctx.etapas.filter(x => !x.sprint && !x.deEtiqueta),trabajos: ctx.trabajos.filter(x => !x.legado) }));
   const [cfg, setCfg] = useState(() => JSON.parse(inicial));
   const [guardando, setGuardando] = useState(false);
   const cambiado = JSON.stringify(cfg) !== inicial;

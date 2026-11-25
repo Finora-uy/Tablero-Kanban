@@ -39,6 +39,8 @@
 .man-horas { gap: 6px; flex-wrap: nowrap; }
 .error-horario { flex-basis: 100%; color: var(--red-text); font-size: 13px; }
 .crono-campos .crono-extra { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; }
+.etapas-tarea { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; }
+.crono-campos .etapas-tarea { flex-basis: 100%; order: 1; }
 .crono-campos .participantes { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 4px; font-size: 13px; }
 .reg-cargo { font-size: 12.5px; }
 .man-horas .entrada { width: 108px; }

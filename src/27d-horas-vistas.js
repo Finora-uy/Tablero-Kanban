@@ -8,6 +8,7 @@ function OpcionesTarea({ ctx, actual }) {
 }
 // Etapa, trabajo y tarea: los mismos tres selectores en el cronómetro, la carga manual y la edición
 function SelectoresRegistro({ ctx, valor, alCambiar, idBase }) {
+  const posibles = etapasDeTarea(valor.tarea && ctx.porId.get(valor.tarea), ctx.etiquetas, ctx.etapas);
   return html`
     <select class="entrada" id=${idBase + '-etapa'} aria-label="Etapa" value=${valor.etapa || ''} onChange=${e => alCambiar({ etapa: e.target.value || null })}>
       <option value="">Sin etapa</option>${ctx.etapas.map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}
@@ -18,9 +19,13 @@ function SelectoresRegistro({ ctx, valor, alCambiar, idBase }) {
       ${[...new Set(ctx.trabajos.filter(x => x.grupo).map(x => x.grupo))].map(g => html`<optgroup key=${g} label=${g}>
         ${ctx.trabajos.filter(x => x.grupo === g && (!x.legado || x.id === valor.trabajo)).map(x => html`<option key=${x.id} value=${x.id}>${x.nombre}</option>`)}</optgroup>`)}
     </select>
-    <select class="entrada" id=${idBase + '-tarea'} aria-label="Tarea del tablero" value=${valor.tarea || ''} onChange=${e => alCambiar({ tarea: e.target.value || null })}>
+    <select class="entrada" id=${idBase + '-tarea'} aria-label="Tarea del tablero" value=${valor.tarea || ''} onChange=${e => alCambiar(elegirTarea(e.target.value || null, valor))}>
       <option value="">Sin tarea del tablero</option><${OpcionesTarea} ctx=${ctx} actual=${valor.tarea} />
-    </select>`;
+    </select>
+    ${posibles.length > 1 && html`<div class="etapas-tarea" role="group" aria-label="A qué etiqueta cargar las horas">
+      <span class="tenue">La tarea tiene ${posibles.length} etiquetas. Cargar las horas en:</span>
+      <div class="selector-chips">${posibles.map(id => html`<button key=${id} type="button" class="chip-btn" aria-pressed=${valor.etapa === id} onClick=${() => alCambiar({ etapa: id })}>${ctx.etapasPorId.get(id)?.nombre}</button>`)}</div>
+    </div>`}`;
 }
 
 // Otras tareas en las que se trabaja a la vez (el tiempo se reparte entre todas al detener el cronómetro)
