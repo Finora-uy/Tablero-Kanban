@@ -2,7 +2,7 @@
 
 Tablero Kanban del equipo de Finora (proyecto final, Universidad ORT Uruguay).
 
-- **Dónde vive:** en internet, con un link del tipo `https://tablero-finora.vercel.app`.
+- **Dónde vive:** en internet, en `https://tablero-kanban-beryl.vercel.app`.
 - **Quién entra:** cada integrante, con su email y contraseña.
 - **Tiempo real:** todos ven los cambios al instante.
 
@@ -41,7 +41,7 @@ git push -u origin main
 1. Entrá a <https://vercel.com> y creá una cuenta con **Continue with GitHub**. Elegí el plan **Hobby**.
 2. Tocá **Add New… → Project**, elegí `tablero-finora` y tocá **Import**.
 3. No cambies nada: el archivo `vercel.json` ya dice cómo armarla. Tocá **Deploy**.
-4. Anotá el link que te da (por ejemplo `https://tablero-finora.vercel.app`).
+4. Anotá el link que te da (por ejemplo `https://tablero-kanban-beryl.vercel.app`).
    Todavía funciona en **modo local**, porque falta la base de datos.
 
 ### 3. Crear la base de datos desde Vercel
@@ -61,8 +61,8 @@ git push -u origin main
 ### 5. Configurar el login en Supabase
 
 1. Andá a **Authentication → URL Configuration**:
-   - En **Site URL**, poné tu link de Vercel: `https://tablero-finora.vercel.app`.
-   - En **Redirect URLs**, agregá `https://tablero-finora.vercel.app/**`.
+   - En **Site URL**, poné tu link de Vercel: `https://tablero-kanban-beryl.vercel.app`.
+   - En **Redirect URLs**, agregá `https://tablero-kanban-beryl.vercel.app/**`.
 2. Andá a **Authentication → Sign In / Providers → Email** y dejá activado **Confirm email**.
    Es importante: así nadie puede crear una cuenta con el email de otro.
 
@@ -146,7 +146,7 @@ Cada tarea muestra en la sección **Código** sus ramas, PRs (con su estado de r
 3. Generar un secreto largo y al azar y cargarlo en Vercel como `GITHUB_WEBHOOK_SECRET` (*Production*, *Sensitive*). También hace falta `SUPABASE_SERVICE_ROLE_KEY` (la misma de los recordatorios).
 4. Volver a publicar.
 5. En GitHub, en el repo `IngSoft-ProyectoGrado/Finora` (no en el del tablero): **Settings → Webhooks → Add webhook**:
-   - **Payload URL:** `https://tablero-finora.vercel.app/api/github-webhook` (tu link de Vercel).
+   - **Payload URL:** `https://tablero-kanban-beryl.vercel.app/api/github-webhook`.
    - **Content type:** `application/json`.
    - **Secret:** el mismo valor de `GITHUB_WEBHOOK_SECRET`.
    - **Events:** *Let me select individual events* → **Branch or tag creation**, **Branch or tag deletion**, **Pushes**, **Pull requests**, **Pull request reviews**.
