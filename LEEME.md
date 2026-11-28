@@ -131,6 +131,8 @@ Cada tarea muestra en la sección **Código** sus ramas, PRs (con su estado de r
 - **Cuerpo del PR:** una línea `Refs: FIN-12` (puede tener varias tareas: `Refs: FIN-12, FIN-13`).
 - No se usa el título del PR ni el mensaje de los commits.
 
+**Usuario de GitHub de cada integrante:** cada uno lo carga en **Equipo → ⚙ (editar)**, en *Usuario de GitHub* (se puede pegar el link del perfil). Así, en la sección **Código** aparece su nombre en vez del @usuario, y en el historial queda, por ejemplo, *Emi vía GitHub* en lugar de *GitHub*. Dos integrantes no pueden tener el mismo usuario.
+
 **Qué hace solo:**
 
 - Cuando se crea la rama, la tarea pasa a **En curso**. Si no tiene estimación en puntos, no se mueve y queda una nota en el historial.

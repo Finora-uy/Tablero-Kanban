@@ -45,7 +45,7 @@ Endpoint nuevo: `api/github-webhook.js` (Vercel).
 ## 4. Orden de prioridad
 
 1. **Vínculo, webhook y pestaña "Código"** en la tarea: ramas, commits (autor, fecha, mensaje, enlace) y estado del PR.
-2. **Mapeo de usuarios de GitHub por integrante** (campo nuevo en el perfil). Es la base de lo demás, para atribuir bien commits y reviews.
+2. ✅ **Mapeo de usuarios de GitHub por integrante** (campo nuevo en el perfil). Es la base de lo demás, para atribuir bien commits y reviews. Hecho: cada uno carga su usuario en **Equipo → editar** (o al sumarse); en la sección Código se ve el integrante en vez del @usuario, y los movimientos automáticos quedan como "Emi vía GitHub".
 3. **Insignia de PR y panel "Pendientes de revisar"**, con alerta a las 48 h sin atender. Sin revisores fijos: lo puede revisar cualquiera.
 4. **Alerta de ramas/PR sin vincular** (no siguen la convención).
 5. **Estado del CI** en el PR, con el evento `workflow_run`.

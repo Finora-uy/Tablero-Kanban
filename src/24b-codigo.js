@@ -3,6 +3,26 @@
    Los datos los guarda el webhook (api/github-webhook.js) y la versión web los carga en estado.github.
    En el Artifact de Claude no hay GitHub: la sección no aparece. */
 const COMMITS_VISIBLES = 5;
+
+/* Usuario de GitHub de cada integrante (campo `github` del perfil) */
+// Acepta "emi", "@emi" o el link del perfil (https://github.com/emi) y devuelve "emi"
+function limpiarLoginGithub(texto) {
+  return String(texto || '').trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/^@/, '').split(/[/?#]/)[0].trim();
+}
+const LOGIN_GITHUB = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
+const loginValido = l => !l || LOGIN_GITHUB.test(l);
+function integranteDeGithub(login, ctx) {
+  const l = String(login || '').toLowerCase();
+  return l ? ctx.miembros.find(m => m.github && m.github.toLowerCase() === l) || null : null;
+}
+// Quién hizo algo en GitHub: el integrante si cargó su usuario, si no el @login (o el nombre del commit)
+function AutorGithub({ login, nombre, ctx }) {
+  const m = integranteDeGithub(login, ctx);
+  if (m) return html`<span class="autor-github" title=${'@' + login}><${Avatar} m=${m} t=${16} />${m.nombre}</span>`;
+  if (login) return html`<span title="Este usuario de GitHub no está cargado en ningún perfil del equipo">@${login}</span>`;
+  return nombre ? html`<span>${nombre}</span>` : null;
+}
+
 const marcaFecha = s => { const v = Date.parse(s || ''); return isNaN(v) ? 0 : v; };
 
 function codigoDeTarea(numero, g) {
@@ -57,14 +77,15 @@ function CodigoDeTarea({ t, ctx }) {
       return html`<li key=${'pr' + p.numero}>
         <${Icono} n="pr" t=${15} />
         <span class="crece"><a href=${p.url} target="_blank" rel="noopener noreferrer"><span class="mono">#${p.numero}</span> ${p.titulo}</a>
-          <span class="tenue codigo-meta">${p.autor_login ? '@' + p.autor_login + ' · ' : ''}${momento(p.mergeado || p.actualizado || p.creado)}</span></span>
+          <span class="tenue codigo-meta">${p.autor_login && html`<${AutorGithub} login=${p.autor_login} ctx=${ctx} /> · `}${momento(p.mergeado || p.actualizado || p.creado)}</span></span>
         <span class=${'tag ' + e.clase}>${e.texto}</span>
       </li>`;
     })}</ul>`}
 
     ${ramas.length > 0 && html`<ul class="lista-simple">${ramas.map(r => html`<li key=${'r' + r.nombre} class=${r.borrada ? 'codigo-borrada' : ''}>
       <${Icono} n="rama" t=${15} />
-      <span class="crece">${r.url && !r.borrada ? html`<a class="mono" href=${r.url} target="_blank" rel="noopener noreferrer">${r.nombre}</a>` : html`<span class="mono">${r.nombre}</span>`}</span>
+      <span class="crece">${r.url && !r.borrada ? html`<a class="mono" href=${r.url} target="_blank" rel="noopener noreferrer">${r.nombre}</a>` : html`<span class="mono">${r.nombre}</span>`}
+        ${r.autor_login && html`<span class="tenue codigo-meta"><${AutorGithub} login=${r.autor_login} ctx=${ctx} /></span>`}</span>
       ${r.borrada ? html`<span class="tag baja">Borrada</span>` : html`<button class="btn-icono chico" aria-label=${'Copiar ' + r.nombre} title="Copiar nombre de la rama" onClick=${() => copiar(r.nombre)}><${Icono} n="copiar" t=${14} /></button>`}
     </li>`)}</ul>`}
 
@@ -74,7 +95,7 @@ function CodigoDeTarea({ t, ctx }) {
         <${Icono} n="commit" t=${15} />
         <a class="mono codigo-sha" href=${c.url} target="_blank" rel="noopener noreferrer" title=${c.sha}>${c.sha.slice(0, 7)}</a>
         <span class="crece" title=${c.mensaje}>${(c.mensaje || '').split('\n')[0]}</span>
-        <span class="tenue codigo-meta">${c.autor_login ? '@' + c.autor_login : c.autor || ''}${c.fecha ? ' · ' + momento(c.fecha) : ''}</span>
+        <span class="tenue codigo-meta"><${AutorGithub} login=${c.autor_login} nombre=${c.autor} ctx=${ctx} />${c.fecha ? ' · ' + momento(c.fecha) : ''}</span>
       </li>`)}</ul>
       ${commits.length > COMMITS_VISIBLES && html`<button class="btn-link" onClick=${() => setTodos(!todos)}>${todos ? 'Ver menos' : `Ver los ${commits.length} commits`}</button>`}
     </div>`}

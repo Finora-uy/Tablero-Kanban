@@ -37,23 +37,41 @@ function ModalNueva({ ctx, inicial = {}, alCerrar, alAbrir }) {
   <//>`;
 }
 
+/* ===== Usuario de GitHub en el perfil ===== */
+// { login, error }: error si no es un usuario válido o si ya lo tiene otro integrante
+function problemaGithub(texto, id, ctx) {
+  const login = limpiarLoginGithub(texto);
+  if (!login) return { login: '' };
+  if (!loginValido(login)) return { login, error: 'Eso no parece un usuario de GitHub: solo letras, números y guiones.' };
+  const otro = integranteDeGithub(login, ctx);
+  if (otro && otro.id !== id) return { login, error: `Ya lo tiene cargado ${otro.nombre}.` };
+  return { login };
+}
+function CampoGithub({ idCampo, valor, alCambiar, gh }) {
+  return html`<div class="campo"><label for=${idCampo}>Usuario de GitHub (opcional)</label>
+    <input class="entrada" id=${idCampo} type="text" maxlength="100" autocomplete="off" spellcheck="false" placeholder="Ej.: emi-vanzini" value=${valor} onInput=${ev => alCambiar(ev.target.value)} aria-invalid=${gh.error ? 'true' : 'false'} aria-describedby=${idCampo + '-ayuda'} />
+    <p id=${idCampo + '-ayuda'} class="tenue" style=${'font-size:12.5px;margin-top:4px' + (gh.error ? ';color:var(--red-text)' : '')}>${gh.error || 'Así el tablero te reconoce en las ramas, commits y PRs del repo. Podés pegar el link de tu perfil.'}</p></div>`;
+}
+
 /* ===== Sumate al equipo ===== */
 function ModalSumate({ ctx, e, alCerrar }) {
   const [nombre, setNombre] = useState('');
   const [rol, setRol] = useState('');
   const usados = new Set(ctx.miembros.map(m => m.color));
   const [color, setColor] = useState(() => (COLORES.find(c => !usados.has(c.id)) || COLORES[0]).id);
+  const [github, setGithub] = useState('');
   const [enviando, setEnviando] = useState(false);
   const libres = ctx.miembros.filter(m => !m.userId || !e.userId);
+  const gh = problemaGithub(github, null, ctx);
   const sumarme = async () => {
-    if (!nombre.trim() || enviando) return;
+    if (!nombre.trim() || enviando || gh.error) return;
     setEnviando(true);
-    const id = await acciones.sumarme({ nombre: nombre.trim(), rol: rol.trim(), color });
+    const id = await acciones.sumarme({ nombre: nombre.trim(), rol: rol.trim(), color, github: gh.login || null });
     setEnviando(false);
     if (id) alCerrar(false);
   };
   const pie = html`<button class="btn btn-fantasma" onClick=${() => alCerrar(true)}>Solo mirar por ahora</button>
-    <button class="btn btn-primario" disabled=${!nombre.trim() || enviando} onClick=${sumarme}>Sumarme al tablero</button>`;
+    <button class="btn btn-primario" disabled=${!nombre.trim() || enviando || gh.error} onClick=${sumarme}>Sumarme al tablero</button>`;
   return html`<${Modal} titulo="Sumate al tablero de Finora" alCerrar=${() => alCerrar(true)} ancho=${540} pie=${pie}>
     <div class="bienvenida-logo"><${Isotipo} t=${44} /><p class="tenue">Así te ve el resto del equipo en las tareas, los comentarios y el resumen. Lo podés cambiar después desde Equipo.</p></div>
     ${libres.length > 0 && html`<div class="campo"><span class="campo-etq">¿Ya te sumaron? Elegí tu nombre</span>
@@ -65,6 +83,7 @@ function ModalSumate({ ctx, e, alCerrar }) {
       <input class="entrada" id="su-rol" type="text" list="roles-sugeridos" maxlength="40" placeholder="Ej.: Datos" value=${rol} onInput=${ev => setRol(ev.target.value)} />
       <datalist id="roles-sugeridos">${ROLES.map(r => html`<option value=${r}></option>`)}</datalist></div>
     <div class="campo"><span class="campo-etq">Tu color</span><${Muestras} idBase="su-color" valor=${color} alCambiar=${setColor} /></div>
+    <${CampoGithub} idCampo="su-github" valor=${github} alCambiar=${setGithub} gh=${gh} />
   <//>`;
 }
 
@@ -74,11 +93,13 @@ function ModalIntegrante({ ctx, e, id, alCerrar }) {
   const [nombre, setNombre] = useState(m ? m.nombre : '');
   const [rol, setRol] = useState(m ? m.rol || '' : '');
   const [color, setColor] = useState(m ? m.color || 'azul' : 'azul');
+  const [github, setGithub] = useState(m ? m.github || '' : '');
   const [confirmar, setConfirmar] = useState(false);
   const esYo = id && id === ctx.yo;
+  const gh = problemaGithub(github, id, ctx);
   const guardarlo = async () => {
-    if (!nombre.trim()) return;
-    const r = await acciones.guardarIntegrante(id, { nombre: nombre.trim(), rol: rol.trim(), color });
+    if (!nombre.trim() || gh.error) return;
+    const r = await acciones.guardarIntegrante(id, { nombre: nombre.trim(), rol: rol.trim(), color, github: gh.login || null });
     if (r) { avisar(id ? 'Guardaste los cambios.' : `Sumaste a ${nombre.trim()}.`); alCerrar(); }
   };
   const pie = confirmar
@@ -87,13 +108,14 @@ function ModalIntegrante({ ctx, e, id, alCerrar }) {
         <button class="btn btn-fantasma btn-chico" onClick=${() => setConfirmar(false)}>Cancelar</button></div>`
     : html`${id && html`<button class="btn btn-peligro" style="margin-right:auto" onClick=${() => setConfirmar(true)}><${Icono} n="basura" t=${14} />Sacar del equipo</button>`}
       <button class="btn btn-fantasma" onClick=${alCerrar}>Cancelar</button>
-      <button class="btn btn-primario" disabled=${!nombre.trim()} onClick=${guardarlo}>${id ? 'Guardar' : 'Sumar'}</button>`;
+      <button class="btn btn-primario" disabled=${!nombre.trim() || gh.error} onClick=${guardarlo}>${id ? 'Guardar' : 'Sumar'}</button>`;
   return html`<${Modal} titulo=${id ? (esYo ? 'Tu perfil' : 'Editar integrante') : 'Sumar integrante'} alCerrar=${alCerrar} pie=${pie}>
     ${!id && html`<p>Cuando esta persona abra el tablero por primera vez, va a poder elegir su nombre de la lista.</p>`}
     <div class="campo"><label for="in-nombre">Nombre o apodo</label><input class="entrada" id="in-nombre" data-foco type="text" maxlength="40" value=${nombre} onInput=${ev => setNombre(ev.target.value)} /></div>
     <div class="campo"><label for="in-rol">Rol</label><input class="entrada" id="in-rol" type="text" list="roles-sugeridos-2" maxlength="40" value=${rol} onInput=${ev => setRol(ev.target.value)} />
       <datalist id="roles-sugeridos-2">${ROLES.map(r => html`<option value=${r}></option>`)}</datalist></div>
     <div class="campo"><span class="campo-etq">Color</span><${Muestras} idBase="in-color" valor=${color} alCambiar=${setColor} /></div>
+    <${CampoGithub} idCampo="in-github" valor=${github} alCambiar=${setGithub} gh=${gh} />
     ${id && m && m.userId && e.userId && m.userId === e.userId && html`<p class="tenue" style="font-size:12.5px">Este perfil está vinculado a tu cuenta, así que te reconoce en cualquier dispositivo.</p>`}
   <//>`;
 }

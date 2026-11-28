@@ -98,8 +98,23 @@ async function leerConfig() {
   return { columnas: (cfg && Array.isArray(cfg.columnas) && cfg.columnas.length ? cfg.columnas : COLUMNAS_BASE), prefijo: (cfg && cfg.prefijo) || 'FIN' };
 }
 
+// Usuario de GitHub (login) → id del integrante que lo cargó en su perfil del tablero
+export const normalizarLogin = s => String(s || '').trim().replace(/^@/, '').toLowerCase();
+export function integranteDeLogin(login, integrantes) {
+  const l = normalizarLogin(login);
+  if (!l) return null;
+  const x = (integrantes || []).find(i => normalizarLogin(i.github) === l);
+  return x ? x.id : null;
+}
+async function quienEs(sender) {
+  if (!sender || !sender.login) return null;
+  const r = await supabase('/rest/v1/docs?coleccion=eq.integrantes&select=id,github:data->>github');
+  return r.ok ? integranteDeLogin(sender.login, r.datos) : null;
+}
+
 // Mueve la tarea FIN-n (si corresponde) y deja el motivo en su historial, firmado por GitHub
-async function moverTarea(numero, destino, motivo, cfg, { avisarSiFalta = false } = {}) {
+// (y por el integrante que hizo el cambio, si cargó su usuario de GitHub en el perfil)
+async function moverTarea(numero, destino, motivo, cfg, { avisarSiFalta = false, quien = null } = {}) {
   const filas = await exigir(supabase(`/rest/v1/docs?coleccion=eq.tareas&data->>numero=eq.${numero}&select=id,data`), 'leer la tarea');
   const fila = filas && filas[0];
   if (!fila) return `${cfg.prefijo}-${numero}: no existe`;
@@ -107,7 +122,7 @@ async function moverTarea(numero, destino, motivo, cfg, { avisarSiFalta = false 
   if (!d || (d.falta && !avisarSiFalta)) return `${cfg.prefijo}-${numero}: sin cambios`;
   const ahora = new Date().toISOString();
   const que = d.falta ? `no la pasó a ${d.columna.nombre} porque le falta la estimación en puntos (${motivo})` : `la movió a ${d.columna.nombre}: ${motivo}`;
-  const cambios = { actualizadaEn: ahora, historial: [...(t.historial || []), { en: ahora, quien: null, por: 'github', que }].slice(-MAX_HISTORIAL) };
+  const cambios = { actualizadaEn: ahora, historial: [...(t.historial || []), { en: ahora, quien, por: 'github', que }].slice(-MAX_HISTORIAL) };
   if (!d.falta) {
     // Al final de la columna, como cuando se mueve a mano
     const enCol = await exigir(supabase(`/rest/v1/docs?coleccion=eq.tareas&data->>columna=eq.${encodeURIComponent(d.columna.id)}&select=orden:data->orden`), 'leer la columna');
@@ -152,7 +167,7 @@ export async function procesar(evento, p) {
     }
     await upsert('github_ramas', { nombre: rama, tarea, url: urlRama(repo, rama), autor_login: p.sender && p.sender.login, creada: ahora, borrada: null }, 'nombre');
     if (!tarea) return ['ok', `rama sin vincular ${rama}`];
-    return ['ok', await moverTarea(tarea, 'enCurso', `se creó la rama ${rama}`, cfg, { avisarSiFalta: true })];
+    return ['ok', await moverTarea(tarea, 'enCurso', `se creó la rama ${rama}`, cfg, { avisarSiFalta: true, quien: await quienEs(p.sender) })];
   }
 
   if (evento === 'push') {
@@ -175,7 +190,7 @@ export async function procesar(evento, p) {
     }));
     if (commits.length) await upsert('github_commits', commits, 'rama,sha');
     // Por si se perdió el aviso de "rama creada" (ese es el que deja la nota si falta la estimación)
-    const mov = p.created ? '; ' + await moverTarea(tarea, 'enCurso', `se creó la rama ${rama}`, cfg) : '';
+    const mov = p.created ? '; ' + await moverTarea(tarea, 'enCurso', `se creó la rama ${rama}`, cfg, { quien: await quienEs(p.sender) }) : '';
     return ['ok', `${commits.length} commits en ${rama}${mov}`];
   }
 
@@ -193,7 +208,8 @@ export async function procesar(evento, p) {
       aMover = fila.tareas.filter(n => !antes.includes(n));
     }
     const res = [];
-    for (const n of aMover) res.push(await moverTarea(n, 'revision', `se abrió el PR #${pr.number}`, cfg));
+    const quien = aMover.length ? await quienEs(p.sender) : null;
+    for (const n of aMover) res.push(await moverTarea(n, 'revision', `se abrió el PR #${pr.number}`, cfg, { quien }));
     return ['ok', `PR #${pr.number} ${p.action}${res.length ? '; ' + res.join(', ') : ''}`];
   }
 

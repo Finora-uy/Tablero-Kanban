@@ -192,6 +192,8 @@ function VistaEquipo({ ctx, e, editable, alEditar, alVerTareas, alSoyYo }) {
           <div style="min-width:0;margin-right:auto">
             <h3>${m.nombre}${esYo ? html` <span class="tag media">Vos</span>` : null}</h3>
             <p>${m.rol || 'Sin rol'}${enLinea ? ' · en línea ahora' : ''}${!m.userId && e.modo === 'nube' ? ' · todavía no entró' : ''}</p>
+            ${m.github ? html`<p class="miembro-github"><${Icono} n="rama" t=${13} /><a href=${'https://github.com/' + encodeURIComponent(m.github)} target="_blank" rel="noopener noreferrer">@${m.github}</a></p>`
+              : estado.github && !estado.github.error && html`<p class="miembro-github tenue"><${Icono} n="rama" t=${13} />Sin usuario de GitHub</p>`}
           </div>
           ${editable && html`<button class="btn-icono chico" aria-label=${'Editar ' + m.nombre} onClick=${() => alEditar(m.id)}><${Icono} n="ajustes" t=${14} /></button>`}
         </div>
@@ -226,7 +228,9 @@ function VistaActividad({ ctx, alAbrir }) {
     <div class="actividad">${dias.map(d => html`<section class="act-dia" key=${d.dia}>
       <h3 class="etiqueta-mono">${tituloDia(d.dia)}</h3>
       <ul class="act-lista">${d.eventos.map((ev, i) => {
-        const m = ev.por === 'github' ? { nombre: 'GitHub', color: 'pizarra' } : ctx.integrantes.get(ev.quien);
+        const persona = ev.quien ? ctx.integrantes.get(ev.quien) : null;
+        // Lo que movió GitHub: a nombre del integrante que hizo la rama o el PR, si cargó su usuario
+        const m = ev.por === 'github' ? (persona ? { ...persona, nombre: persona.nombre + ' vía GitHub' } : { nombre: 'GitHub', color: 'pizarra' }) : persona;
         return html`<li class="act-item" key=${i}>
           <${Avatar} m=${m} t=${26} />
           <p class="texto"><strong>${m ? m.nombre : 'Alguien'}</strong> ${ev.que === 'creó la tarea' ? 'creó' : ev.que} · <button onClick=${() => alAbrir(ev.t.id)}>${codigo(ev.t, ctx)}</button> ${ev.t.titulo}
