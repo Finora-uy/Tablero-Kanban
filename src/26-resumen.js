@@ -68,7 +68,7 @@ function VistaResumen({ ctx, alAbrir, alFiltrar }) {
   </div>`;
   if (!activas.length) return html`<div class="vista"><div class="vista-cab"><div><h2>Resumen</h2><p>Cuando carguen tareas, acá van a ver el avance del equipo.</p></div></div><${VacioVista} /></div>`;
   return html`<div class="vista">
-    <div class="vista-cab"><div><h2>Resumen</h2><p>Cómo viene el equipo hoy, ${fechaLarga(ctx.hoy)}.</p></div></div>
+    <div class="vista-cab"><div><h2>Resumen</h2><p>Cómo viene el equipo hoy, ${fechaLarga(ctx.hoy)}.</p></div><${ExportarMatriz} ctx=${ctx} /></div>
     <div class="tiles">
       ${tile('Abiertas', numUY(abiertas.length), ptsAbiertos ? `${numUY(ptsAbiertos)} puntos por hacer` : 'Sin estimar')}
       ${tile('Vencidas', numUY(vencidas.length), vencidas.length ? 'Ver las vencidas' : 'Todo al día', vencidas.length > 0, vencidas.length ? () => alFiltrar({ vencidas: true }) : null)}

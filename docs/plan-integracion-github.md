@@ -49,7 +49,7 @@ Endpoint nuevo: `api/github-webhook.js` (Vercel).
 3. ✅ **Insignia de PR y panel "Pendientes de revisar"**, con alerta a las 48 h sin atender. Sin revisores fijos: lo puede revisar cualquiera. Hecho: la tarjeta muestra el estado de su PR; el panel *Requiere tu atención* lista los PRs sin revisar (sin los propios) y marca en rojo los de más de 48 h. El reloj se guarda en `github_prs.esperando_desde` y se reinicia al volver a pedir revisión o al subir commits después de un *cambios pedidos*.
 4. ✅ **Alerta de ramas/PR sin vincular** (no siguen la convención). Hecho: sección *Sin vincular a una tarea* en el panel *Requiere tu atención*, con lo que falta corregir. Cada uno ve lo suyo; el rol SCM ve todo. Se excluyen las ramas fijas (`main`, `develop`, `release/…`) y las ramas que ya tienen PR.
 5. ✅ **Estado del CI** en el PR, con el evento `workflow_run`. Hecho: tabla `github_ci` con la última corrida de cada workflow por rama (los avisos desordenados no pisan una corrida más nueva). Se ve en la sección Código; si falla el CI de un PR abierto, también en la tarjeta y en *Pendientes de revisar*. Requiere marcar **Workflow runs** en el webhook.
-6. **Exportar la matriz** tarea → requisito → PR, para la documentación de la tesis.
+6. ✅ **Exportar la matriz** tarea → requisito → PR, para la documentación de la tesis. Hecho: botón en **Resumen** que baja un Excel con la marca de Finora, con dos hojas: *Matriz* (requisito, tarea, PR con enlace, revisión, CI, ramas, commits y trazabilidad) y *Por requisito* (tareas terminadas, PRs mergeados y estado). El requisito sale del campo *Requerimiento* de la tarea.
 
 Solo si sobra tiempo: releases y tags; alerta de tarea sin código (solo para tarjetas de tipo código).
 

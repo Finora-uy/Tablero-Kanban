@@ -147,6 +147,8 @@ Cada tarea muestra en la sección **Código** sus ramas, PRs (con su estado de r
 
 **Estado del CI:** cuando corre un workflow de GitHub Actions en una rama, la sección **Código** muestra *CI en verde*, *CI corriendo*, *CI falló* o *CI cancelado* al lado del PR, o de la rama si todavía no tiene PR. Si hay varios workflows, manda el peor, y al tocarlo se abre esa corrida. Si falla el CI de un PR abierto, la tarjeta lo marca con *CI falló* y el panel **Pendientes de revisar** también lo avisa. No se muestra el CI de `develop`.
 
+**Matriz de trazabilidad:** en **Resumen → Matriz de trazabilidad (.xlsx)** se descarga un Excel para la documentación. Arma una fila por requisito y tarea, con su PR, el estado de revisión, el CI, las ramas y los commits. Una segunda hoja muestra la cobertura de cada requisito: cuántas de sus tareas están terminadas y qué PRs ya se mergearon. El requisito sale del campo **Requerimiento** de la tarea (por ejemplo `RF-12`; se pueden poner varios separados por coma). Las tareas con código pero sin requisito aparecen al final como *Sin requisito*, y las archivadas no se incluyen.
+
 **Puesta en marcha:**
 
 1. Confirmar con Nico que el repo `IngSoft-ProyectoGrado/Finora` permite crear webhooks (hace falta ser admin del repo o de la organización).
