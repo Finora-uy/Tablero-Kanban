@@ -127,11 +127,40 @@ function textoSinVincular(x, ctx) {
   return x.motivo === 'sin' ? `Falta ${ctx.prefijo.toLowerCase()}-n en el nombre (tipo/${ctx.prefijo.toLowerCase()}-n-descripcion)` : `${cods} no existe en el tablero`;
 }
 
+/* ===== CI (GitHub Actions): la última corrida de cada workflow en la rama ===== */
+const CI_VISIBLE = {
+  falla: { texto: 'CI falló', uno: 'falló', clase: 'alta', icono: 'cerrar' },
+  pendiente: { texto: 'CI corriendo', uno: 'corriendo', clase: 'media', icono: 'reloj' },
+  cancelado: { texto: 'CI cancelado', uno: 'cancelado', clase: 'baja', icono: 'cerrar' },
+  ok: { texto: 'CI en verde', uno: 'en verde', clase: 'hecho', icono: 'check' },
+};
+// El peor estado entre los workflows de la rama manda; el enlace va a la corrida que lo explica
+function ciDeRama(rama) {
+  const g = estado.github;
+  if (!g || g.error || !g.ci || !rama) return null;
+  const corridas = g.ci.filter(c => c.rama === rama);
+  if (!corridas.length) return null;
+  const peor = Object.keys(CI_VISIBLE).find(e => corridas.some(c => c.estado === e));
+  const ref = corridas.filter(c => c.estado === peor).sort((a, b) => marcaFecha(b.actualizado) - marcaFecha(a.actualizado))[0];
+  return { estado: peor, url: ref.url, corridas };
+}
+function EstadoCi({ rama }) {
+  const ci = ciDeRama(rama);
+  if (!ci) return null;
+  const v = CI_VISIBLE[ci.estado];
+  const detalle = ci.corridas.map(c => `${c.workflow}: ${CI_VISIBLE[c.estado].uno}`).join(' · ');
+  const cuerpo = html`<${Icono} n=${v.icono} t=${12} />${v.texto}`;
+  return ci.url ? html`<a class=${'tag ci ' + v.clase} href=${ci.url} target="_blank" rel="noopener noreferrer" title=${detalle}>${cuerpo}</a>`
+    : html`<span class=${'tag ci ' + v.clase} title=${detalle}>${cuerpo}</span>`;
+}
+
 function InsigniaPr({ t }) {
   const p = prDeTarea(t.numero);
   if (!p) return null;
   const e = estadoPrVisible(p);
-  return html`<span class=${'t-pr ' + e.clase} title=${`PR #${p.numero}: ${e.texto}`}><${Icono} n="pr" t=${12} />#${p.numero} ${e.corto}</span>`;
+  const ci = p.estado === 'abierto' ? ciDeRama(p.rama) : null;
+  return html`<span class=${'t-pr ' + e.clase} title=${`PR #${p.numero}: ${e.texto}`}><${Icono} n="pr" t=${12} />#${p.numero} ${e.corto}</span>
+    ${ci && ci.estado === 'falla' && html`<span class="t-pr alta" title="Falló el CI del PR"><${Icono} n="cerrar" t=${12} />CI falló</span>`}`;
 }
 
 // Nombre de rama sugerido según la convención: tipo/fin-n-descripcion
@@ -166,6 +195,7 @@ function CodigoDeTarea({ t, ctx }) {
         <${Icono} n="pr" t=${15} />
         <span class="crece"><a href=${p.url} target="_blank" rel="noopener noreferrer"><span class="mono">#${p.numero}</span> ${p.titulo}</a>
           <span class="tenue codigo-meta">${p.autor_login && html`<${AutorGithub} login=${p.autor_login} ctx=${ctx} /> · `}${momento(p.mergeado || p.actualizado || p.creado)}</span></span>
+        <${EstadoCi} rama=${p.rama} />
         <span class=${'tag ' + e.clase}>${e.texto}</span>
       </li>`;
     })}</ul>`}
@@ -174,6 +204,7 @@ function CodigoDeTarea({ t, ctx }) {
       <${Icono} n="rama" t=${15} />
       <span class="crece">${r.url && !r.borrada ? html`<a class="mono" href=${r.url} target="_blank" rel="noopener noreferrer">${r.nombre}</a>` : html`<span class="mono">${r.nombre}</span>`}
         ${r.autor_login && html`<span class="tenue codigo-meta"><${AutorGithub} login=${r.autor_login} ctx=${ctx} /></span>`}</span>
+      ${!r.borrada && !prs.some(p => p.rama === r.nombre) && html`<${EstadoCi} rama=${r.nombre} />`}
       ${r.borrada ? html`<span class="tag baja">Borrada</span>` : html`<button class="btn-icono chico" aria-label=${'Copiar ' + r.nombre} title="Copiar nombre de la rama" onClick=${() => copiar(r.nombre)}><${Icono} n="copiar" t=${14} /></button>`}
     </li>`)}</ul>`}
 

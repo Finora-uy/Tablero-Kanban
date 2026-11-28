@@ -295,3 +295,7 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .cargando svg { animation: latir 1.6s ease-in-out infinite; }
 @keyframes latir { 50% { opacity: .45; transform: scale(.92); } }
 .fallo { padding: 40px var(--gutter); display: grid; gap: 12px; justify-items: start; }
+
+/* Estado del CI en la sección Código */
+.tag.ci { display: inline-flex; align-items: center; gap: 3px; text-decoration: none; white-space: nowrap; }
+a.tag.ci:hover { text-decoration: underline; }

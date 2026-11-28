@@ -234,7 +234,34 @@ export async function procesar(evento, p) {
     return ['ok', `revisión de PR #${pr.number}: ${review.state || p.action}`];
   }
 
+  if (evento === 'workflow_run') {
+    const run = p.workflow_run || {};
+    const rama = String(run.head_branch || '');
+    if (!rama) return ['ignorado', 'workflow sin rama'];
+    if (rama === principal) return ['ignorado', 'CI de la rama principal'];
+    const fila = filaCi(run);
+    // Los avisos pueden llegar desordenados: no se pisa una corrida más nueva (ni un resultado con un "en curso" viejo)
+    const previa = await exigir(supabase(`/rest/v1/github_ci?rama=eq.${encodeURIComponent(rama)}&workflow=eq.${encodeURIComponent(fila.workflow)}&select=run_id,intento,estado`), 'leer el CI');
+    if (previa && previa[0] && !ciMasNuevo(fila, previa[0])) return ['ignorado', `CI viejo de ${rama}`];
+    await upsert('github_ci', fila, 'rama,workflow');
+    return ['ok', `CI ${fila.workflow} en ${rama}: ${fila.estado}`];
+  }
+
   return ['ignorado', `evento ${evento}`];
+}
+
+/* ===== CI (GitHub Actions) ===== */
+const CONCLUSION = { success: 'ok', skipped: 'ok', neutral: 'ok', cancelled: 'cancelado', stale: 'cancelado' };
+export const estadoCi = run => run.status !== 'completed' ? 'pendiente' : CONCLUSION[run.conclusion] || 'falla';
+export const filaCi = run => ({
+  rama: String(run.head_branch || ''), workflow: String(run.name || run.workflow_id || 'CI').slice(0, 200),
+  run_id: run.id, intento: run.run_attempt || 1, sha: run.head_sha || null, estado: estadoCi(run),
+  url: run.html_url || null, actualizado: run.updated_at || new Date().toISOString(),
+});
+export function ciMasNuevo(nueva, previa) {
+  if (nueva.run_id !== Number(previa.run_id)) return nueva.run_id > Number(previa.run_id);
+  if (nueva.intento !== previa.intento) return nueva.intento > previa.intento;
+  return !(nueva.estado === 'pendiente' && previa.estado !== 'pendiente');
 }
 
 /* ===== Entregas: cada aviso se procesa una sola vez (salvo que haya fallado) ===== */

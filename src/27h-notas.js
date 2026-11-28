@@ -149,7 +149,7 @@ function PanelAtencion({ ctx, alAbrir }) {
           return html`<li key=${'pr' + p.numero}><a class="atencion-item" href=${p.url} target="_blank" rel="noopener noreferrer" title="Abrir el PR en GitHub">
             <span class="mono tenue">#${p.numero}${tareas.length ? ' · ' + tareas.map(t => codigo(t, ctx)).join(', ') : ''}</span>
             <span class="atencion-titulo">${p.titulo}</span>
-            <span class=${'atencion-detalle' + (demorado ? ' vencida' : '')}>${autor ? autor.nombre : p.autor_login ? '@' + p.autor_login : 'Alguien'} · esperando ${hace(esperandoDesde(p))}</span>
+            <span class=${'atencion-detalle' + (demorado ? ' vencida' : '')}>${autor ? autor.nombre : p.autor_login ? '@' + p.autor_login : 'Alguien'} · esperando ${hace(esperandoDesde(p))}${(ciDeRama(p.rama) || {}).estado === 'falla' ? ' · CI falló' : ''}</span>
           </a></li>`;
         })}</ul>
       </section>`}

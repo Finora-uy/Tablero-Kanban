@@ -258,6 +258,30 @@ create table if not exists public.github_prs (
 alter table public.github_prs add column if not exists esperando_desde timestamptz;
 create index if not exists github_prs_tareas on public.github_prs using gin (tareas);
 
+-- Estado del CI (GitHub Actions): la última corrida de cada workflow en cada rama
+create table if not exists public.github_ci (
+  rama        text not null,
+  workflow    text not null,
+  run_id      bigint not null,
+  intento     integer not null default 1,
+  sha         text,
+  estado      text not null check (estado in ('pendiente', 'ok', 'falla', 'cancelado')),
+  url         text,
+  actualizado timestamptz,
+  primary key (rama, workflow)
+);
+revoke all on public.github_ci from anon;
+grant select on public.github_ci to authenticated;
+grant select, insert, update, delete on public.github_ci to service_role;
+alter table public.github_ci enable row level security;
+drop policy if exists "equipo lee ci" on public.github_ci;
+create policy "equipo lee ci" on public.github_ci for select to authenticated using ((select public.es_del_equipo()));
+do $$
+begin
+  alter publication supabase_realtime add table public.github_ci;
+exception when duplicate_object then null;
+end $$;
+
 revoke all on public.github_entregas, public.github_ramas, public.github_commits, public.github_prs from anon;
 revoke all on public.github_entregas from authenticated;
 grant select on public.github_ramas, public.github_commits, public.github_prs to authenticated;

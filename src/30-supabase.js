@@ -176,8 +176,8 @@ function conectarDatosWeb(cliente, user) {
 
 /* ===== GitHub: ramas, commits y PRs vinculados a las tareas (los escribe api/github-webhook) ===== */
 function conectarGithub(cliente) {
-  const TABLAS = { ramas: 'github_ramas', commits: 'github_commits', prs: 'github_prs' };
-  estado.github = { ramas: [], commits: [], prs: [], cargado: false, error: false };
+  const TABLAS = { ramas: 'github_ramas', commits: 'github_commits', prs: 'github_prs', ci: 'github_ci' };
+  estado.github = { ramas: [], commits: [], prs: [], ci: [], cargado: false, error: false };
   const leerTabla = async clave => {
     const filas = [];
     for (let desde = 0; ; desde += 1000) {
@@ -189,7 +189,8 @@ function conectarGithub(cliente) {
   };
   const cargar = async claves => {
     try {
-      const listas = await Promise.all(claves.map(leerTabla));
+      // El CI es opcional: si todavía no se creó la tabla github_ci, el resto se ve igual
+      const listas = await Promise.all(claves.map(k => k === 'ci' ? leerTabla(k).catch(err => { console.warn('GitHub: sin datos de CI', err); return []; }) : leerTabla(k)));
       const g = { ...estado.github, cargado: true, error: false };
       claves.forEach((k, i) => { g[k] = listas[i]; });
       estado.github = g;
