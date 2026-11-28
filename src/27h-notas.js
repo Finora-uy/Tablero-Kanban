@@ -117,7 +117,8 @@ function PanelAtencion({ ctx, alAbrir }) {
   const { ok, vencen } = pendientesDe(ctx);
   const prs = prsParaRevisar(ctx);
   const demorados = prs.filter(p => revisionDemorada(p)).length;
-  const total = ok.length + vencen.length + prs.length;
+  const sueltos = sinVincular(ctx);
+  const total = ok.length + vencen.length + prs.length + sueltos.length;
   const fila = (t, detalle, clase) => html`<li key=${t.id}><button class="atencion-item" onClick=${() => alAbrir(t.id)}>
     <span class="mono tenue">${codigo(t, ctx)}</span>
     <span class="atencion-titulo">${t.titulo}</span>
@@ -164,6 +165,20 @@ function PanelAtencion({ ctx, alAbrir }) {
       ${vencen.length > 0 && html`<section>
         <h3>Tus tareas por vencer <span class="mono tenue">${vencen.length}</span></h3>
         <ul>${vencen.map(t => fila(t, mayus(cuandoVence(t.vence, ctx.hoy)) + ' · ' + nombreColumna(t.columna), estadoVence(t.vence, ctx.hoy)))}</ul>
+      </section>`}
+      ${sueltos.length > 0 && html`<section>
+        <h3>Sin vincular a una tarea <span class="mono tenue">${sueltos.length}</span></h3>
+        ${esScm(ctx) && html`<p class="atencion-nota">Ves las de todo el equipo porque tenés el rol SCM.</p>`}
+        <ul>${sueltos.map(x => {
+          const autor = integranteDeGithub(x.autor, ctx);
+          const quien = autor ? autor.nombre : x.autor ? '@' + x.autor : null;
+          const cuerpo = html`<span class="mono tenue">${x.ref}${quien ? ' · ' + quien : ''}</span>
+            <span class=${'atencion-titulo' + (x.tipo === 'rama' ? ' mono' : '')}>${x.titulo}</span>
+            <span class="atencion-detalle pronto">${textoSinVincular(x, ctx)}</span>`;
+          return html`<li key=${x.clave}>${x.url
+            ? html`<a class="atencion-item" href=${x.url} target="_blank" rel="noopener noreferrer" title="Abrir en GitHub">${cuerpo}</a>`
+            : html`<div class="atencion-item">${cuerpo}</div>`}</li>`;
+        })}</ul>
       </section>`}
     </div>
   </aside>`;

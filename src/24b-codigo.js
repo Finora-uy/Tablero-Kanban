@@ -90,6 +90,43 @@ function prsParaRevisar(ctx) {
     .sort((a, b) => esperandoDesde(a) - esperandoDesde(b));
 }
 
+/* ===== Ramas y PRs que no siguen la convención (no se pudieron vincular a una tarea) ===== */
+// Ramas de larga vida: no llevan FIN-n
+const RAMAS_FIJAS = /^(main|master|develop|development|dev|staging|gh-pages)$|^release\//i;
+const esScm = ctx => { const m = ctx.yo && ctx.integrantes.get(ctx.yo); return !!m && normalizar(m.rol || '').includes('scm'); };
+// Lo que ve cada uno: lo propio (según su usuario de GitHub); quien tiene el rol SCM ve todo
+function sinVincular(ctx) {
+  const g = estado.github;
+  if (!g || g.error) return [];
+  const numeros = new Set(ctx.tareas.map(t => t.numero));
+  // null: vinculado · 'sin': no tiene FIN-n · 'inexistente': tiene FIN-n pero esa tarea no está en el tablero
+  const problema = nums => !nums.length ? 'sin' : nums.some(n => numeros.has(n)) ? null : 'inexistente';
+  const lista = [];
+  for (const p of g.prs) {
+    if (p.estado !== 'abierto') continue;
+    const m = problema(p.tareas || []);
+    if (m) lista.push({ tipo: 'pr', clave: 'pr' + p.numero, titulo: p.titulo, ref: '#' + p.numero, url: p.url, autor: p.autor_login, cuando: p.creado, motivo: m, nums: p.tareas || [] });
+  }
+  // Una rama con PR abierto o mergeado ya se resuelve por el PR
+  const conPr = new Set(g.prs.filter(p => p.estado !== 'cerrado').map(p => p.rama));
+  for (const r of g.ramas) {
+    if (r.borrada || RAMAS_FIJAS.test(r.nombre) || conPr.has(r.nombre)) continue;
+    const m = problema(r.tarea ? [r.tarea] : []);
+    if (m) lista.push({ tipo: 'rama', clave: 'r' + r.nombre, titulo: r.nombre, ref: 'Rama', url: r.url, autor: r.autor_login, cuando: r.ultimo_push || r.creada, motivo: m, nums: r.tarea ? [r.tarea] : [] });
+  }
+  const scm = esScm(ctx);
+  const yo = ctx.yo && ctx.integrantes.get(ctx.yo);
+  const mio = yo && yo.github ? yo.github.toLowerCase() : null;
+  return lista.filter(x => scm || (mio && String(x.autor || '').toLowerCase() === mio))
+    .sort((a, b) => marcaFecha(b.cuando) - marcaFecha(a.cuando));
+}
+// Qué falta y cómo arreglarlo
+function textoSinVincular(x, ctx) {
+  const cods = x.nums.map(n => `${ctx.prefijo}-${n}`).join(', ');
+  if (x.tipo === 'pr') return x.motivo === 'sin' ? `Sumá la línea Refs: ${ctx.prefijo}-n al cuerpo del PR` : `${cods} no existe en el tablero: corregí la línea Refs`;
+  return x.motivo === 'sin' ? `Falta ${ctx.prefijo.toLowerCase()}-n en el nombre (tipo/${ctx.prefijo.toLowerCase()}-n-descripcion)` : `${cods} no existe en el tablero`;
+}
+
 function InsigniaPr({ t }) {
   const p = prDeTarea(t.numero);
   if (!p) return null;

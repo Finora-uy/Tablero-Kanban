@@ -182,7 +182,8 @@ export async function procesar(evento, p) {
       await upsert('github_ramas', { nombre: rama, tarea, url: urlRama(repo, rama), borrada: ahora }, 'nombre');
       return ['ok', `rama borrada ${rama}`];
     }
-    await upsert('github_ramas', { nombre: rama, tarea, url: urlRama(repo, rama), ultimo_push: ahora, borrada: null }, 'nombre');
+    // Si el push crea la rama, se anota quién la creó (por si se perdió el aviso de "rama creada")
+    await upsert('github_ramas', { nombre: rama, tarea, url: urlRama(repo, rama), ultimo_push: ahora, borrada: null, ...(p.created && p.sender ? { autor_login: p.sender.login } : {}) }, 'nombre');
     if (!tarea) return ['ok', `push a rama sin vincular ${rama}`];
     const commits = (p.commits || []).map(c => ({
       rama, sha: c.id, tarea, mensaje: String(c.message || '').slice(0, 2000), autor: (c.author && c.author.name) || null,
