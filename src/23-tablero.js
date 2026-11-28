@@ -19,7 +19,8 @@ function Tarjeta({ t, ctx, oculta, editable, alAbrir, alBajar, alTecla, alMenuCo
   const aRever = esRevision(t.columna) && asigVivos.some(id => t.rever && t.rever[id]);
   const nOk = pideOk ? asigVivos.filter(id => (t.aprobaciones || []).includes(id)).length : 0;
   const exc = !hecha && excepcionAprobada(t) && !t.dorExcepcion.resueltaEn ? (excepcionVencida(t, ctx.hoy) ? 'vencida' : 'activa') : null;
-  const tieneMeta = t.vence || items.length || nCom || t.estimacion || pideOk || aRever || t.moscow || exc;
+  const pr = prDeTarea(t.numero);
+  const tieneMeta = t.vence || items.length || nCom || t.estimacion || pideOk || aRever || t.moscow || exc || pr;
   return html`<article class=${cls} data-tarea=${t.id} tabindex="0" role="button"
       aria-label=${`${cod}: ${t.titulo}. ${ctx.colPorId.get(t.columna)?.nombre || ''}${bloq ? '. Bloqueada' : ''}`}
       onPointerDown=${ev => alBajar(ev, t)} onClick=${() => alAbrir(t.id)} onKeyDown=${ev => alTecla(ev, t)} onContextMenu=${alMenuContexto}>
@@ -42,6 +43,7 @@ function Tarjeta({ t, ctx, oculta, editable, alAbrir, alBajar, alTecla, alMenuCo
         ${t.estimacion != null && html`<span class="t-dato" title="Estimación en puntos">${t.estimacion} pts</span>`}
         ${MOSCOW_POR_ID[t.moscow] && html`<span class="t-dato t-moscow" title=${'MoSCoW: ' + MOSCOW_POR_ID[t.moscow].desc}>${MOSCOW_POR_ID[t.moscow].nombre}</span>`}
         ${exc && html`<span class=${'t-dato t-excepcion' + (exc === 'vencida' ? ' vencida' : '')} title=${exc === 'vencida' ? 'Excepción de DoR vencida: el faltante no se resolvió a tiempo' : 'Entró al sprint con excepción de DoR'}>Excepción DoR</span>`}
+        ${pr && html`<${InsigniaPr} t=${t} />`}
         ${aRever && html`<span class="t-rever" title="Pidieron que la revean">Rever</span>`}
         ${pideOk && html`<span class=${'t-ok' + (nOk === asigVivos.length ? ' completo' : '')} title=${`${nOk} de ${asigVivos.length} responsables dieron el OK`}><${Icono} n="check" t=${12} />OK ${nOk}/${asigVivos.length}</span>`}
       </div>

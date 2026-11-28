@@ -251,8 +251,11 @@ create table if not exists public.github_prs (
   url         text,
   creado      timestamptz,
   actualizado timestamptz,
-  mergeado    timestamptz
+  mergeado    timestamptz,
+  esperando_desde timestamptz          -- desde cuándo espera revisión (alerta de 48 h)
 );
+-- Para bases creadas antes de que existiera la columna
+alter table public.github_prs add column if not exists esperando_desde timestamptz;
 create index if not exists github_prs_tareas on public.github_prs using gin (tareas);
 
 revoke all on public.github_entregas, public.github_ramas, public.github_commits, public.github_prs from anon;

@@ -198,8 +198,18 @@ export async function procesar(evento, p) {
     const pr = p.pull_request || {};
     const cfg = await leerConfig();
     const fila = filaPr(pr, cfg.prefijo);
-    await upsert('github_prs', fila, 'numero');
     const listo = pr.state === 'open' && !pr.draft;
+    // Desde cuándo espera revisión (para la alerta de 48 h): al quedar listo o cuando le vuelven a pedir revisión
+    const ahora = new Date().toISOString();
+    if (listo && ['opened', 'reopened', 'ready_for_review'].includes(p.action)) fila.esperando_desde = ahora;
+    if (listo && p.action === 'review_requested') Object.assign(fila, { esperando_desde: ahora, revision: null });
+    await upsert('github_prs', fila, 'numero');
+    // Si pidieron cambios y el autor sube commits nuevos, vuelve a esperar revisión
+    if (listo && p.action === 'synchronize') {
+      await exigir(supabase(`/rest/v1/github_prs?numero=eq.${pr.number}&revision=eq.cambios`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ revision: null, esperando_desde: ahora }),
+      }), 'actualizar el PR');
+    }
     let aMover = [];
     if (listo && ['opened', 'reopened', 'ready_for_review'].includes(p.action)) aMover = fila.tareas;
     // Si al editar el cuerpo se sumó una "Refs: FIN-n", esa tarea también pasa a revisión

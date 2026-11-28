@@ -115,7 +115,9 @@ function PanelAtencion({ ctx, alAbrir }) {
   const setAbierto = v => { setAbiertoS(v); guardar('finora-atencion', v ? 'abierto' : 'cerrado'); };
   if (!ctx.yo) return null;
   const { ok, vencen } = pendientesDe(ctx);
-  const total = ok.length + vencen.length;
+  const prs = prsParaRevisar(ctx);
+  const demorados = prs.filter(p => revisionDemorada(p)).length;
+  const total = ok.length + vencen.length + prs.length;
   const fila = (t, detalle, clase) => html`<li key=${t.id}><button class="atencion-item" onClick=${() => alAbrir(t.id)}>
     <span class="mono tenue">${codigo(t, ctx)}</span>
     <span class="atencion-titulo">${t.titulo}</span>
@@ -135,7 +137,21 @@ function PanelAtencion({ ctx, alAbrir }) {
       <button class="btn-icono chico" onClick=${() => setAbierto(false)} title="Ocultar el panel" aria-label="Ocultar el panel" aria-expanded="true"><${Icono} n="der" t=${16} /></button>
     </header>
     <div class="atencion-cuerpo">
-      ${!total && html`<p class="atencion-vacio"><${Icono} n="check" t=${16} />Estás al día: no tenés OK pendientes ni tareas por vencer.</p>`}
+      ${!total && html`<p class="atencion-vacio"><${Icono} n="check" t=${16} />Estás al día: no tenés OK pendientes, PRs para revisar ni tareas por vencer.</p>`}
+      ${prs.length > 0 && html`<section>
+        <h3>Pendientes de revisar <span class="mono tenue">${prs.length}</span></h3>
+        ${demorados > 0 && html`<p class="atencion-alerta"><${Icono} n="reloj" t=${14} />${demorados === 1 ? 'Un PR lleva' : demorados + ' PRs llevan'} más de ${HORAS_ALERTA_REVISION} h sin revisar.</p>`}
+        <ul>${prs.map(p => {
+          const tareas = (p.tareas || []).map(n => ctx.tareas.find(t => t.numero === n)).filter(Boolean);
+          const autor = integranteDeGithub(p.autor_login, ctx);
+          const demorado = revisionDemorada(p);
+          return html`<li key=${'pr' + p.numero}><a class="atencion-item" href=${p.url} target="_blank" rel="noopener noreferrer" title="Abrir el PR en GitHub">
+            <span class="mono tenue">#${p.numero}${tareas.length ? ' · ' + tareas.map(t => codigo(t, ctx)).join(', ') : ''}</span>
+            <span class="atencion-titulo">${p.titulo}</span>
+            <span class=${'atencion-detalle' + (demorado ? ' vencida' : '')}>${autor ? autor.nombre : p.autor_login ? '@' + p.autor_login : 'Alguien'} · esperando ${hace(esperandoDesde(p))}</span>
+          </a></li>`;
+        })}</ul>
+      </section>`}
       ${ok.length > 0 && html`<section>
         <h3>Falta tu OK <span class="mono tenue">${ok.length}</span></h3>
         <ul>${ok.map(t => {

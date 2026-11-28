@@ -46,7 +46,7 @@ Endpoint nuevo: `api/github-webhook.js` (Vercel).
 
 1. **Vínculo, webhook y pestaña "Código"** en la tarea: ramas, commits (autor, fecha, mensaje, enlace) y estado del PR.
 2. ✅ **Mapeo de usuarios de GitHub por integrante** (campo nuevo en el perfil). Es la base de lo demás, para atribuir bien commits y reviews. Hecho: cada uno carga su usuario en **Equipo → editar** (o al sumarse); en la sección Código se ve el integrante en vez del @usuario, y los movimientos automáticos quedan como "Emi vía GitHub".
-3. **Insignia de PR y panel "Pendientes de revisar"**, con alerta a las 48 h sin atender. Sin revisores fijos: lo puede revisar cualquiera.
+3. ✅ **Insignia de PR y panel "Pendientes de revisar"**, con alerta a las 48 h sin atender. Sin revisores fijos: lo puede revisar cualquiera. Hecho: la tarjeta muestra el estado de su PR; el panel *Requiere tu atención* lista los PRs sin revisar (sin los propios) y marca en rojo los de más de 48 h. El reloj se guarda en `github_prs.esperando_desde` y se reinicia al volver a pedir revisión o al subir commits después de un *cambios pedidos*.
 4. **Alerta de ramas/PR sin vincular** (no siguen la convención).
 5. **Estado del CI** en el PR, con el evento `workflow_run`.
 6. **Exportar la matriz** tarea → requisito → PR, para la documentación de la tesis.

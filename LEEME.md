@@ -138,6 +138,8 @@ Cada tarea muestra en la sección **Código** sus ramas, PRs (con su estado de r
 - Cuando se crea la rama, la tarea pasa a **En curso**. Si no tiene estimación en puntos, no se mueve y queda una nota en el historial.
 - Cuando el PR queda listo para revisión (abierto y no borrador), la tarea pasa a **En revisión**.
 - Al mergear **no** pasa a Hecho, porque cada responsable tiene que dar su OK. El PR se ve como *PR mergeado*.
+
+**PRs para revisar:** cada tarjeta muestra la insignia de su PR (`#12 En revisión`, `Aprobado`, `Cambios`, `Mergeado`). En el panel **Requiere tu atención**, al costado del tablero, la sección **Pendientes de revisar** lista los PRs abiertos que nadie revisó todavía, del más viejo al más nuevo, sin los tuyos. Los puede revisar cualquiera. Si uno lleva más de 48 h esperando, se marca en rojo en el panel y en la tarjeta. El reloj arranca cuando el PR queda listo para revisión. Vuelve a empezar si le piden revisión de nuevo, o si pidieron cambios y el autor sube commits nuevos.
 - Nunca retrocede una tarea, ni toca las archivadas. Cada movimiento queda en el historial firmado por **GitHub**.
 - Ignora los bots (Dependabot), los tags y los pushes a `main`.
 

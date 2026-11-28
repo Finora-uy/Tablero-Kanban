@@ -36,14 +36,65 @@ function codigoDeTarea(numero, g) {
   return { ramas, prs, commits };
 }
 
+/* ===== Revisión de PRs: lo puede revisar cualquiera; a las 48 h sin revisar se marca ===== */
+const HORAS_ALERTA_REVISION = 48;
+const esperaRevision = p => p.estado === 'abierto' && !p.borrador && !p.revision;
+const esperandoDesde = p => marcaFecha(p.esperando_desde || p.creado);
+const revisionDemorada = (p, ahora = Date.now()) => esperaRevision(p) && esperandoDesde(p) > 0 && ahora - esperandoDesde(p) >= HORAS_ALERTA_REVISION * 3600e3;
+// "hace 5 h", "hace 3 días"
+function hace(ms, ahora = Date.now()) {
+  const h = Math.max(0, Math.floor((ahora - ms) / 3600e3));
+  if (h < 1) return 'hace menos de 1 h';
+  if (h < 48) return `hace ${h} h`;
+  return `hace ${Math.floor(h / 24)} días`;
+}
+
 // Estado del PR para mostrar: mergeado, cerrado, borrador, aprobado, cambios pedidos o esperando revisión
 function estadoPrVisible(p) {
-  if (p.estado === 'mergeado') return { texto: 'PR mergeado', clase: 'hecho' };
-  if (p.estado === 'cerrado') return { texto: 'Cerrado', clase: 'baja' };
-  if (p.borrador) return { texto: 'Borrador', clase: 'baja' };
-  if (p.revision === 'aprobado') return { texto: 'Aprobado', clase: 'hecho' };
-  if (p.revision === 'cambios') return { texto: 'Cambios pedidos', clase: 'alta' };
-  return { texto: 'Esperando revisión', clase: 'media' };
+  if (p.estado === 'mergeado') return { texto: 'PR mergeado', corto: 'Mergeado', clase: 'hecho' };
+  if (p.estado === 'cerrado') return { texto: 'Cerrado', corto: 'Cerrado', clase: 'baja' };
+  if (p.borrador) return { texto: 'Borrador', corto: 'Borrador', clase: 'baja' };
+  if (p.revision === 'aprobado') return { texto: 'Aprobado', corto: 'Aprobado', clase: 'hecho' };
+  if (p.revision === 'cambios') return { texto: 'Cambios pedidos', corto: 'Cambios', clase: 'alta' };
+  if (revisionDemorada(p)) return { texto: `Sin revisar ${hace(esperandoDesde(p))}`, corto: '+48 h sin revisar', clase: 'alta' };
+  return { texto: 'Esperando revisión', corto: 'En revisión', clase: 'media' };
+}
+
+// PR que representa a la tarea en la tarjeta: el abierto más nuevo; si no hay, el mergeado más nuevo
+let cachePrs = { lista: null, mapa: new Map() };
+function prDeTarea(numero) {
+  const g = estado.github;
+  if (!g || g.error || numero == null) return null;
+  if (cachePrs.lista !== g.prs) {
+    const mapa = new Map();
+    const peso = p => (p.estado === 'abierto' ? 2 : p.estado === 'mergeado' ? 1 : 0);
+    for (const p of g.prs) {
+      if (p.estado === 'cerrado') continue;
+      for (const n of p.tareas || []) {
+        const otro = mapa.get(n);
+        if (!otro || peso(p) > peso(otro) || (peso(p) === peso(otro) && p.numero > otro.numero)) mapa.set(n, p);
+      }
+    }
+    cachePrs = { lista: g.prs, mapa };
+  }
+  return cachePrs.mapa.get(numero) || null;
+}
+
+// PRs que esperan revisión, del más viejo al más nuevo, sin los míos (no me reviso yo)
+function prsParaRevisar(ctx) {
+  const g = estado.github;
+  if (!g || g.error) return [];
+  const yo = ctx.yo && ctx.integrantes.get(ctx.yo);
+  const mio = yo && yo.github ? yo.github.toLowerCase() : null;
+  return g.prs.filter(p => esperaRevision(p) && !(mio && String(p.autor_login || '').toLowerCase() === mio))
+    .sort((a, b) => esperandoDesde(a) - esperandoDesde(b));
+}
+
+function InsigniaPr({ t }) {
+  const p = prDeTarea(t.numero);
+  if (!p) return null;
+  const e = estadoPrVisible(p);
+  return html`<span class=${'t-pr ' + e.clase} title=${`PR #${p.numero}: ${e.texto}`}><${Icono} n="pr" t=${12} />#${p.numero} ${e.corto}</span>`;
 }
 
 // Nombre de rama sugerido según la convención: tipo/fin-n-descripcion
